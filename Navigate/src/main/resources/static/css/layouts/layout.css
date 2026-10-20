@@ -1,0 +1,16 @@
+.main{
+  display: flex;
+
+}
+.header-div{
+  border: 1px solid black;
+}
+
+.side-div{
+  width: 20%;
+  border: 1px solid blue;
+}
+.map-div{
+  width: 80%;
+  border: 1px solid red;
+}

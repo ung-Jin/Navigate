@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: Navigate
+  #데이터베이스 연결 정보
+  datasource:
+    driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:mariadb://localhost:3306/study_db
+    username: study_user
+    password: ${DB_PASSWORD:}
+
+#쿼리문이 있는 mapper 파일 위치 지정, classpath는 resources 폴더를 의미함
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+
+#session에 데이터 저장 후 웹 브라우저가 cookie 활성화 되어 있음을 인지
+server:
+  servlet:
+    session:
+      tracking-modes: cookie
