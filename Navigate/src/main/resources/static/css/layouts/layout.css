@@ -14,3 +14,21 @@
   width: 80%;
   border: 1px solid red;
 }
+
+#map{
+  height: 80vh;
+}
+
+/* 항구 마커(⚓) */
+.port-marker{
+  font-size: 20px;
+  text-align: center;
+  line-height: 24px;
+}
+
+/* 항구 이름표 */
+.leaflet-tooltip{
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;  /* 이름표도 클릭 가능 */
+}

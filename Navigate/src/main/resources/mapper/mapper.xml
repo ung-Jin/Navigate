@@ -3,8 +3,21 @@
 
 <!-- 해당 파일에 모든 쿼리문을 작성 -->
 <!-- namespace에는 xml파일과 연결할 Mapper interface 파일명을 패키지를 포함하여 적어주세요 -->
-<mapper namespace="mapper">
-	
+<mapper namespace="com.green.Navigate.main.mapper.MainMapper">
+
+	<resultMap id="portMap" type="com.green.Navigate.main.dto.PortDTO">
+		<result column="name" property="name"/>
+		<result column="lat" property="lat"/>
+		<result column="lng" property="lng"/>
+	</resultMap>
+
+	<!-- 무역항 31개 전체 조회 (id = MainMapper의 메서드명) -->
+	<select id="selectPortList" resultMap="portMap">
+		SELECT name, lat, lng
+		FROM ports
+		ORDER BY port_id
+	</select>
+
 </mapper>
 
 
