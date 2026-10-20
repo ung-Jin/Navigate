@@ -3,12 +3,11 @@
 <th:block th:fragment="sideFragment">
 
   <div class="side-div">
-    <div>출발지 선택</div>
-    <div>도착지 선택</div>
+    <!-- 선택한 출발지 -> 도착지 (side.js가 채워줌) -->
+    <div id="route-text">출발지 선택 -> 도착지 선택</div>
+    <button id="find-route-btn" type="button" disabled>경로찾기</button>
+    <!-- 임시 버튼: 선택한 출발지/도착지 지우기 -->
+    <button id="reset-btn" type="button">선택초기화</button>
   </div>
 
-
 </th:block>
-
-
-
