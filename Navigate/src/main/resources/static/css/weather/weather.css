@@ -110,7 +110,6 @@
 .wx-grid small { color: #888; }
 .wx-obs { color: #999; font-size: 11px; margin-top: 4px; text-align: right; }
 
-.wx-toggle { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; cursor: pointer; }
 .wx-foot { color: #999; font-size: 11px; margin-top: 6px; }
 
 
@@ -171,9 +170,9 @@
 .wx-chart { position: relative; min-width: 0; height: 100%; display: flex; flex-direction: column; }
 .wx-chart-title { font-weight: 600; color: #444; font-size: 12px; }
 .wx-chart svg { display: block; flex: 1; }
-.wx-axis { font-size: 10px; fill: #888; }
+.wx-axis { font-size: 10px; fill: #888; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
 .wx-axis-day { fill: #444; font-weight: 600; }
-.wx-th-label { font-size: 10px; font-weight: 600; }
+.wx-th-label { font-size: 10px; font-weight: 600; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
 .wx-grid-line { stroke: #eee; stroke-width: 1; }
 .wx-grid-th { stroke: #ccc; stroke-dasharray: 3 3; }
 .wx-day-line { stroke: #ccc; stroke-width: 1; }
@@ -192,3 +191,34 @@
 .wx-drawer-tip div { margin-top: 3px; }
 .wx-drawer-tip i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 .wx-tip-lv { font-weight: 700; margin-left: 4px; }
+
+/* 글자 크기 키움 (패널이 높아진 만큼) */
+.wx-panel { font-size: 14px; }
+.wx-title { font-size: 16px; }
+.wx-time { font-size: 12px; }
+.wx-summary { font-size: 14px; }
+.wx-name { font-size: 16px; }
+.wx-role { font-size: 12px; }
+.wx-badge { font-size: 13px; padding: 1px 9px; }
+.wx-why { font-size: 13px; }
+.wx-grid { font-size: 14px; }
+.wx-grid dd { font-size: 15px; font-weight: 500; }
+.wx-grid small { font-size: 12px; }
+.wx-obs { font-size: 12px; }
+.wx-fc-title { font-size: 13px; }
+.wx-fc-sum { font-size: 13px; }
+.wx-fc-open { font-size: 13px; padding: 6px 0; }
+.wx-card.wx-empty { font-size: 13px; }
+.wx-foot { font-size: 12px; margin-top: 8px; }
+.wx-grid { row-gap: 1px; }
+.wx-cards { gap: 6px; }
+.wx-summary { margin-bottom: 6px; }
+.wx-body { width: 310px; }
+.wx-grid dt { white-space: nowrap; }
+
+/* 카드를 조금 더 촘촘하게 (패널 아래 공간 확보) */
+.wx-card { padding: 7px 10px; }
+.wx-cards { gap: 6px; }
+.wx-fc { margin-top: 6px; padding-top: 5px; }
+.wx-fc-open { margin-top: 5px; padding: 4px 0; }
+.wx-why { margin-top: 2px; }
