@@ -7,27 +7,18 @@ const map = L.map('map', {
   maxBoundsViscosity: 1.0 //이거는 고정 나갓다돌아오는 뭐그런거?
 }).setView([36.0, 127.5], 7); //첫 보이는 화면
 
-
-
 // 기본 배경 지도
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// 바다 정보(항로, 부표 등)를 위에 덧씌우는 레이어
-L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenSeaMap contributors'
-}).addTo(map);
-
-// 무역항 마커: /api/ports (DB의 ports 테이블)를 불러와서 항구마다 마커 + 클릭 시 이름/위경도 팝업
-
+// 무역항 마커: /api/ports (DB의 ports 테이블)를 불러와서 항구마다 마커 + 이름표
 // 항구 마커 모양: 이모지(⚓)를 아이콘으로 사용 (색, 크기는 layout.css의 .port-marker)
 const portIcon = L.divIcon({
   className: 'port-marker',
   html: '⚓',
   iconSize: [24, 24],     // 아이콘 크기
-  iconAnchor: [12, 12],   // 좌표에 맞출 아이콘 위치 (가운데)
-  popupAnchor: [0, -12]   // 팝업이 뜨는 위치 (아이콘 위쪽)
+  iconAnchor: [12, 12]    // 좌표에 맞출 아이콘 위치 (가운데)
 });
 
 const portMarkers = [];  // { name, marker } — 선택 표시를 바꾸려고 마커를 보관
@@ -37,16 +28,16 @@ const portMarkers = [];  // { name, marker } — 선택 표시를 바꾸려고 �
 function refreshPortLabels() {
   const start = sessionStorage.getItem('startPort');
   const end = sessionStorage.getItem('endPort');
-  portMarkers.forEach(p => {
+  for (const p of portMarkers) {
     const label = p.marker.getTooltip().getElement();  // 이름표 HTML 요소
-    if (label) label.classList.toggle('port-selected', p.name === start || p.name === end);
-  });
+    label.classList.toggle('port-selected', p.name === start || p.name === end);
+  }
 }
 
 axios.get('/api/ports')
   .then(response => {
     // axios는 응답 데이터가 res.data에 들어 있음
-    response.data.forEach(p => {
+    for (const p of response.data) {
       // 마커나 이름표를 클릭하면 side.js의 clickPort()가 실행되어 sessionStorage에 저장됨
       const marker = L.marker([p.lat, p.lng], { icon: portIcon })
         .addTo(map)
@@ -54,9 +45,6 @@ axios.get('/api/ports')
         .bindTooltip(p.name, { permanent: true, direction: 'right', offset: [8, 0], interactive: true })
         .on('click', () => clickPort(p.name));
       portMarkers.push({ name: p.name, marker: marker });
-    });
+    }
     refreshPortLabels();  // 이미 선택된 항구가 있으면 바로 표시
-  })
-  .catch(err => {
-    console.log('항구 데이터를 불러오지 못했습니다.', err);
   });

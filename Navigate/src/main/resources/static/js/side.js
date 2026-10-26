@@ -4,8 +4,7 @@
 
 // F5(새로고침)로 페이지를 다시 열었으면 선택한 출발지/도착지를 비움
 // (이 파일이 맨 먼저 실행되므로 기상 패널·영상 등 다른 코드가 읽기 전에 지워짐)
-const sideNav = performance.getEntriesByType('navigation')[0];
-if (sideNav && sideNav.type === 'reload') {
+if (performance.getEntriesByType('navigation')[0].type === 'reload') {
   sessionStorage.removeItem('startPort');
   sessionStorage.removeItem('endPort');
 }
@@ -38,9 +37,7 @@ function renderRoute() {
   const start = sessionStorage.getItem('startPort');  // 없으면 null
   const end = sessionStorage.getItem('endPort');
 
-  const startName = start || '출발지 선택';
-  const endName = end || '도착지 선택';
-  document.getElementById('route-text').textContent = startName + ' -> ' + endName;
+  document.getElementById('route-text').textContent = (start || '출발지 선택') + ' -> ' + (end || '도착지 선택');
 
   // 둘 다 선택됐을 때만 버튼을 누를 수 있음
   document.getElementById('find-route-btn').disabled = !(start && end);

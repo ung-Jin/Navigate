@@ -15,7 +15,6 @@
   font-weight: 700;
   cursor: pointer;
 }
-.cctv-open-btn:hover { background: #1e40af; }
 
 /* 모달: 화면 전체를 덮는 어두운 배경 (기본은 숨김, .cctv-show 가 붙으면 보임) */
 .cctv-modal {
@@ -31,8 +30,6 @@
 
 .cctv-box {
   max-width: 96vw;            /* 너비는 안의 영상 개수에 맞게 (영상 1개면 작게, 2개면 크게) */
-  max-height: 95vh;
-  overflow-y: auto;
   padding: 16px 20px;
   border-radius: 8px;
   background: #fff;
@@ -56,8 +53,7 @@
 /* 항구별 영상 칸 (화면이 좁으면 칸이 같이 줄어듦) */
 .cctv-body { display: flex; gap: 16px; align-items: flex-start; }
 .cctv-item { width: 780px; flex: 0 1 auto; min-width: 0; }  /* 영상 한 칸은 780px (화면이 좁으면 같이 줄어듦) */
-.cctv-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
-.cctv-note { min-height: 18px; color: #666; font-size: 12px; margin-bottom: 4px; }  /* 글이 없어도 높이 유지 */
+.cctv-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
 .cctv-item video { display: block; width: 100%; background: #000; }
 
 /* 안내 문구 (영상 없음: 회색, 재생 실패: 빨강) */

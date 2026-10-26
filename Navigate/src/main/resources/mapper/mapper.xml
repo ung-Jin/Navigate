@@ -5,17 +5,10 @@
 <!-- namespace에는 xml파일과 연결할 Mapper interface 파일명을 패키지를 포함하여 적어주세요 -->
 <mapper namespace="com.green.Navigate.main.mapper.MainMapper">
 
-	<resultMap id="portMap" type="com.green.Navigate.main.dto.PortDTO">
-		<result column="name" property="name"/>
-		<result column="lat" property="lat"/>
-		<result column="lng" property="lng"/>
-	</resultMap>
-
-	<!-- 무역항 31개 전체 조회 (id = MainMapper의 메서드명) -->
-	<select id="selectPortList" resultMap="portMap">
+	<!-- 무역항 31개 전체 조회 (id = MainMapper의 메서드명, 컬럼 이름 = DTO 변수 이름이라 resultType 으로 바로 담김) -->
+	<select id="selectPortList" resultType="com.green.Navigate.main.dto.PortDTO">
 		SELECT name, lat, lng
 		FROM ports
-		ORDER BY port_id
 	</select>
 
 </mapper>
