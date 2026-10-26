@@ -6,6 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <link rel="stylesheet" th:href="@{/css/layouts/layout.css}">
+  <link rel="stylesheet" th:href="@{/css/traffic.css}">
+  <link rel="stylesheet" th:href="@{/css/safety.css}">
   <!-- Leaflet 지도 라이브러리 (css) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -29,8 +31,13 @@
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
   <script th:src="@{/js/side.js}"></script>
   <script th:src="@{/js/map.js}"></script>
+
   <!-- 기상 패널 (weather) -->
   <th:block th:replace="~{weather/fragments :: weatherScripts}"></th:block>
+  <script th:src="@{/js/when.js}"></script>
+  <script th:src="@{/js/traffic.js}"></script>
+  <script th:src="@{/js/safety.js}"></script>
+
 
 </body>
 

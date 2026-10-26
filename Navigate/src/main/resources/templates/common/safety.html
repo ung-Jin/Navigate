@@ -1,0 +1,43 @@
+
+<!-- 안전진단 패널 (safety.js가 채워줌) — side.html 안에 들어감 -->
+<th:block th:fragment="safetyFragment">
+
+  <section class="panel" id="safety-panel">
+    <!-- 체크하면 패널이 펼쳐지고 지도에 표시, 끄면 한 줄로 접힘 (처음엔 꺼 둠 — 켤 때 예보를 받음)
+         시각은 위쪽 "볼 시각"(when.html)을 따름 -->
+    <div class="panel-head">
+      <label class="panel-toggle"><input type="checkbox" id="sf-on"> 안전진단</label>
+      <span id="sf-time" class="muted">사고위험 예보</span>
+    </div>
+
+    <div class="panel-body">
+      <!-- 숫자 요약 -->
+      <div class="kpis">
+        <div class="kpi">
+          <span class="k">경계</span>
+          <b id="sf-n-high">-</b>
+        </div>
+        <div class="kpi">
+          <span class="k">주의</span>
+          <b id="sf-n-mid">-</b>
+        </div>
+        <!-- 교통 × 위험 (지금 = 선박 수, 미래 = 혼잡 예보와 결합) -->
+        <div class="kpi wide">
+          <span class="k" id="sf-expo-k">위험 칸(경계·주의) 안 선박</span>
+          <b id="sf-expo-n">-</b>
+          <small id="sf-expo-s" class="muted"></small>
+        </div>
+        <button class="kpi wide" id="sf-top" type="button" title="누르면 이 칸으로 이동">
+          <span class="k" id="sf-top-k">가장 위험한 곳</span>
+          <b id="sf-top-n">-</b>
+          <small id="sf-top-s" class="muted"></small>
+        </button>
+      </div>
+
+      <!-- 범례 -->
+      <div id="sf-legend" class="legend"></div>
+      <div id="sf-msg" class="msg"></div>
+    </div>
+  </section>
+
+</th:block>
