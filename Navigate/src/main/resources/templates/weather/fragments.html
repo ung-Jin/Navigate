@@ -1,0 +1,9 @@
+<!--
+  기상 패널 묶음 (weather 담당).
+  layout.html의 map.js 스크립트 아래에 한 줄만 추가:
+    <th:block th:replace="~{weather/fragments :: weatherScripts}"></th:block>
+-->
+<th:block th:fragment="weatherScripts">
+  <link rel="stylesheet" th:href="@{/css/weather/weather.css}">
+  <script th:src="@{/js/weather/weather-panel.js}"></script>
+</th:block>
