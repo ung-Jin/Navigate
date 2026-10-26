@@ -22,12 +22,11 @@ body{
 
 .side-div{
   width: 15%;
-  border: 1px solid blue;
   overflow: hidden;
+  border-right: 1px solid black;
 }
 .map-div{
   width: 85%;
-  border: 1px solid red;
 }
 
 #map{
@@ -46,4 +45,14 @@ body{
   font-size: 12px;
   font-weight: bold;
   cursor: pointer;  /* 이름표도 클릭 가능 */
+}
+
+/* 선택한(출발지/도착지) 항구 이름표 — 다시 누르면 취소됨 */
+.leaflet-tooltip.port-selected{
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+.leaflet-tooltip-right.port-selected::before{
+  border-right-color: #1d4ed8;  /* 이름표 왼쪽 작은 화살표도 같은 색 */
 }

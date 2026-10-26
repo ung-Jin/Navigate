@@ -30,17 +30,32 @@ const portIcon = L.divIcon({
   popupAnchor: [0, -12]   // 팝업이 뜨는 위치 (아이콘 위쪽)
 });
 
+const portMarkers = [];  // { name, marker } — 선택 표시를 바꾸려고 마커를 보관
+
+// 선택한 출발지/도착지의 이름표에 'port-selected' 표시를 붙임 (색은 layout.css)
+// side.js 의 renderRoute() 가 선택이 바뀔 때마다 호출함
+function refreshPortLabels() {
+  const start = sessionStorage.getItem('startPort');
+  const end = sessionStorage.getItem('endPort');
+  portMarkers.forEach(p => {
+    const label = p.marker.getTooltip().getElement();  // 이름표 HTML 요소
+    if (label) label.classList.toggle('port-selected', p.name === start || p.name === end);
+  });
+}
+
 axios.get('/api/ports')
   .then(response => {
     // axios는 응답 데이터가 res.data에 들어 있음
     response.data.forEach(p => {
       // 마커나 이름표를 클릭하면 side.js의 clickPort()가 실행되어 sessionStorage에 저장됨
-      L.marker([p.lat, p.lng], { icon: portIcon })
+      const marker = L.marker([p.lat, p.lng], { icon: portIcon })
         .addTo(map)
         // interactive: true -> 이름표를 눌러도 마커를 누른 것과 같게 동작
         .bindTooltip(p.name, { permanent: true, direction: 'right', offset: [8, 0], interactive: true })
         .on('click', () => clickPort(p.name));
+      portMarkers.push({ name: p.name, marker: marker });
     });
+    refreshPortLabels();  // 이미 선택된 항구가 있으면 바로 표시
   })
   .catch(err => {
     console.log('항구 데이터를 불러오지 못했습니다.', err);

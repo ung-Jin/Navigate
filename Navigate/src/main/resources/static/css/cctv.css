@@ -1,0 +1,74 @@
+/* 실시간 항만 영상 (cctv- 접두사로 다른 스타일과 겹치지 않게) */
+
+/* 기상 패널 안의 [항만 영상] 버튼 (cctv.js 가 넣어 줌) */
+.cctv-open-btn {
+  display: block;
+  width: 100%;
+  margin: 10px 0;             /* 카드 아래, 위험 기준 안내 위 */
+  padding: 9px 0;
+  border: none;               /* 흰 패널 위에서 눈에 띄게 파란색으로 채움 */
+  border-radius: 6px;
+  background: #1d4ed8;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cctv-open-btn:hover { background: #1e40af; }
+
+/* 모달: 화면 전체를 덮는 어두운 배경 (기본은 숨김, .cctv-show 가 붙으면 보임) */
+.cctv-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2000;              /* 기상 패널(1100)·지도 위 */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .6);
+}
+.cctv-modal.cctv-show { display: flex; }
+
+.cctv-box {
+  max-width: 96vw;            /* 너비는 안의 영상 개수에 맞게 (영상 1개면 작게, 2개면 크게) */
+  max-height: 95vh;
+  overflow-y: auto;
+  padding: 16px 20px;
+  border-radius: 8px;
+  background: #fff;
+  font: 13px/1.45 system-ui, -apple-system, "Malgun Gothic", sans-serif;
+  color: #222;
+}
+.cctv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+.cctv-close {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* 항구별 영상 칸 (화면이 좁으면 칸이 같이 줄어듦) */
+.cctv-body { display: flex; gap: 16px; align-items: flex-start; }
+.cctv-item { width: 780px; flex: 0 1 auto; min-width: 0; }  /* 영상 한 칸은 780px (화면이 좁으면 같이 줄어듦) */
+.cctv-title { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+.cctv-note { min-height: 18px; color: #666; font-size: 12px; margin-bottom: 4px; }  /* 글이 없어도 높이 유지 */
+.cctv-item video { display: block; width: 100%; background: #000; }
+
+/* 안내 문구 (영상 없음: 회색, 재생 실패: 빨강) */
+.cctv-none {
+  display: flex;               /* 가로·세로 가운데 정렬 */
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;        /* 영상(16:9)과 같은 크기 -> 영상 가운데 높이에 글자가 옴 */
+  color: #666;
+  text-align: center;
+}
+.cctv-error { margin-top: 6px; color: #c62828; }
+
+.cctv-source { margin-top: 10px; color: #666; font-size: 11px; }
