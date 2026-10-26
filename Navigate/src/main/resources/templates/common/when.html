@@ -1,0 +1,15 @@
+
+<!-- 볼 시각 (when.js가 채워줌) — 교통현황·안전진단이 같은 시각을 봄. side.html 안에 들어감 -->
+<th:block th:fragment="whenFragment">
+
+  <section class="when-bar" id="when-bar">
+    <div class="seg" role="radiogroup" aria-label="볼 날짜">
+      <label><input type="radio" name="when-day" value="now" checked><span>지금</span></label>
+      <label><input type="radio" name="when-day" value="0"><span>오늘</span></label>
+      <label><input type="radio" name="when-day" value="1"><span>내일</span></label>
+      <label><input type="radio" name="when-day" value="2"><span>모레</span></label>
+    </div>
+    <select id="when-hour" aria-label="볼 시각" disabled></select>
+  </section>
+
+</th:block>
