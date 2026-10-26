@@ -308,6 +308,9 @@ function loadTrafficForecast() {
     });
 }
 
+document.getElementById('traffic-panel').classList.toggle('collapsed', !trafficOn());
+
+
 // 켜기 / 끄기 — 끄면 패널이 한 줄로 접히고 지도에서 지움
 document.getElementById('tr-on').addEventListener('change', () => {
   document.getElementById('traffic-panel').classList.toggle('collapsed', !trafficOn());
