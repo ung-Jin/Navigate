@@ -1,0 +1,215 @@
+/* 교통현황 패널 (side 안) — 스크롤이 생기지 않게 높이를 작게 유지 */
+.panel{
+  padding: 8px;
+  border-top: 1px solid #d9dde3;
+  font-size: 13px;
+}
+.panel-head{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+/* 제목 체크박스: 끄면 패널 내용을 접음 (교통현황·안전진단 공통) */
+.panel-toggle{
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.panel.collapsed .panel-body{
+  display: none;
+}
+.panel.collapsed .panel-head{
+  margin-bottom: 0;
+}
+.muted{
+  color: #6b7280;
+  font-size: 11px;
+}
+
+/* 볼 시각 (교통현황·안전진단 공통): 지금 / 오늘·내일·모레 + 시각 */
+.when-bar{
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-top: 1px solid #d9dde3;
+  font-size: 13px;
+}
+.when-bar .seg{
+  flex: 1;
+  margin-bottom: 0;
+}
+.when-bar select{
+  font: inherit;
+  padding: 0 2px;
+  border: 1px solid #c8ced6;
+  border-radius: 6px;
+}
+.when-bar select:disabled{
+  color: #9ca3af;
+}
+
+/* 버튼 묶음 (볼 시각 등) */
+.seg{
+  display: flex;
+  border: 1px solid #c8ced6;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.seg label{
+  flex: 1;
+  text-align: center;
+  cursor: pointer;
+}
+.seg input{
+  display: none;
+}
+.seg span{
+  display: block;
+  padding: 3px 0;
+}
+.seg input:checked + span{
+  background: #1c5cab;
+  color: #fff;
+}
+
+/* 숫자 요약 */
+.kpis{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+.kpi{
+  display: flex;
+  flex-direction: column;
+  padding: 4px 6px;
+  border: 1px solid #e3e6ea;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  text-align: left;
+}
+.kpi .k{
+  color: #6b7280;
+  font-size: 11px;
+}
+.kpi b{
+  font-size: 16px;
+}
+.kpi.wide{
+  grid-column: span 2;
+}
+button.kpi{
+  cursor: pointer;   /* 누르면 이동하는 카드만 */
+}
+button.kpi:hover{
+  border-color: #1c5cab;
+}
+
+/* 범례 */
+.legend{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.legend .chip{
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.legend i{
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.legend .unit{
+  color: #6b7280;
+}
+.legend .legend-row{
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+}
+
+/* 지도: 해역 이름표 (줌 8~9) */
+.tr-zone-wrap{
+  background: none;
+  border: none;
+}
+.tr-zone{
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 8px;
+  border: 1.5px solid #fff;
+  border-radius: 10px;
+  background: #7c3aed;
+  color: #fff;
+  white-space: nowrap;
+  line-height: 1.15;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.tr-zone b{
+  font-size: 15px;
+}
+.tr-zone span{
+  font-size: 10px;
+}
+.tr-zone.top{
+  background: #4c1d95;
+}
+.tr-zone:hover{
+  outline: 2px solid #f5b400;
+}
+
+/* 지도: 칸별 선박 수 (줌 10) — 2척 이상 숫자, 1척 점 */
+.tr-cell-num{
+  background: none;
+  border: none;
+}
+.tr-cell-num span{
+  display: block;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: bold;
+  color: #4c1d95;
+  text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
+  white-space: nowrap;
+}
+.tr-cell-num span.dot{
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #4c1d95;
+  box-shadow: 0 0 0 1px #fff;
+}
+/* 밀집도가 진한 칸(10% 이상) 위에서는 흰 글자·흰 점 */
+.tr-cell-num.on-dark span{
+  color: #fff;
+  text-shadow: 0 0 2px #2e1065, 0 0 2px #2e1065;
+}
+.tr-cell-num.on-dark span.dot{
+  background: #fff;
+  box-shadow: 0 0 0 1px #2e1065;
+}
+
+/* 수집 실패 등 안내 */
+.msg{
+  color: #b42318;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.msg:empty{
+  display: none;
+}

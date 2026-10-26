@@ -1,6 +1,20 @@
+/* 화면 한 장에 꼭 맞게 — 페이지 스크롤 없음 (헤더 + 나머지 전부 지도·사이드) */
+*{
+  box-sizing: border-box;
+}
+html, body{
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+body{
+  display: flex;
+  flex-direction: column;
+}
 .main{
   display: flex;
-
+  flex: 1;
+  min-height: 0;
 }
 .header-div{
   border: 1px solid black;
@@ -9,6 +23,7 @@
 .side-div{
   width: 20%;
   border: 1px solid blue;
+  overflow: hidden;
 }
 .map-div{
   width: 80%;
@@ -16,7 +31,7 @@
 }
 
 #map{
-  height: 80vh;
+  height: 100%;
 }
 
 /* 항구 마커(⚓) */

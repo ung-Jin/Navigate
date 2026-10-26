@@ -1,0 +1,21 @@
+/* 안전진단 패널 — 공통 모양(.panel, .kpis, .legend, .msg)은 traffic.css 를 같이 씀 */
+
+
+/* 바람 화살표 (풍향에 맞춰 돌림) */
+.wind-arrow{
+  display: inline-block;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* 툴팁 안 구분선 (위험 정보 | 교통 칸 정보) */
+.tip-hr{
+  margin: 3px 0;
+  border: none;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* 위험 칸 위 마우스 (칸이 칠해진 곳만) */
+.leaflet-safetyRisk-pane path.leaflet-interactive{
+  pointer-events: visiblePainted;
+}

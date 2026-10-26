@@ -8,6 +8,12 @@
     <button id="find-route-btn" type="button" disabled>경로찾기</button>
     <!-- 임시 버튼: 선택한 출발지/도착지 지우기 -->
     <button id="reset-btn" type="button">선택초기화</button>
+
+    <!-- 볼 시각 (common/when.html) — 교통현황·안전진단 공통 -->
+    <div th:replace="~{common/when::whenFragment}"></div>
+    <!-- 교통현황 (common/traffic.html) · 안전진단 (common/safety.html) — 제목의 체크박스로 골라 봄 -->
+    <div th:replace="~{common/traffic::trafficFragment}"></div>
+    <div th:replace="~{common/safety::safetyFragment}"></div>
   </div>
 
 </th:block>

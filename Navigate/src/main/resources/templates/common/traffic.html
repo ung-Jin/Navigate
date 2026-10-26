@@ -1,0 +1,36 @@
+
+<!-- 교통현황 패널 (traffic.js가 채워줌) — side.html 안에 들어감 -->
+<th:block th:fragment="trafficFragment">
+
+  <section class="panel" id="traffic-panel">
+    <!-- 체크하면 패널이 펼쳐지고 지도에 표시, 끄면 한 줄로 접힘 -->
+    <div class="panel-head">
+      <label class="panel-toggle"><input type="checkbox" id="tr-on" checked> 교통현황</label>
+      <span id="tr-time" class="muted">-</span>
+    </div>
+
+    <div class="panel-body">
+      <!-- 숫자 요약 -->
+      <div class="kpis">
+        <div class="kpi">
+          <span class="k" id="tr-k1">선박 수</span>
+          <b id="tr-ships">-</b>
+        </div>
+        <div class="kpi">
+          <span class="k" id="tr-k2">선박 있는 칸</span>
+          <b id="tr-cells">-</b>
+        </div>
+        <button class="kpi wide" id="tr-top" type="button" title="누르면 이 칸으로 이동">
+          <span class="k" id="tr-top-k">가장 붐비는 칸</span>
+          <b id="tr-top-n">-</b>
+          <small id="tr-top-s" class="muted"></small>
+        </button>
+      </div>
+
+      <!-- 범례 -->
+      <div id="tr-legend" class="legend"></div>
+      <div id="tr-msg" class="msg"></div>
+    </div>
+  </section>
+
+</th:block>

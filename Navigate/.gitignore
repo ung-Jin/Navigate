@@ -35,3 +35,7 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### 인증키 · 로컬 캐시 (깃에 올리지 않음) ###
+.env
+cache/

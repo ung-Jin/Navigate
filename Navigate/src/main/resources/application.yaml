@@ -1,6 +1,9 @@
 spring:
   application:
     name: Navigate
+  # API 인증키는 .env 파일에서 읽음 (깃에 올리지 않음) — Navigate/.env (실행 위치가 Navigate 든 저장소 맨 위든 찾음)
+  config:
+    import: optional:file:./.env[.properties],optional:file:./Navigate/.env[.properties]
   #데이터베이스 연결 정보
   datasource:
     driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
@@ -17,3 +20,9 @@ server:
   servlet:
     session:
       tracking-modes: cookie
+
+#MTIS 오픈API (한국해양교통안전공단) — 키는 .env 의 MTIS_KEY=...
+mtis:
+  key: ${MTIS_KEY:}
+  daily-limit: 150      # 하루 호출 상한 (개발키 500건을 Python 대시보드 등과 나눠 쓰므로 여유 있게)
+  cache-dir: cache      # 호출 기록·마지막 스냅샷 저장 폴더 (깃 제외)
