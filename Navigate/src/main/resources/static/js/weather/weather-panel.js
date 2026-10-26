@@ -28,7 +28,6 @@
   let refreshedAt = null;
   let loadError = null;
   let lastKey = null;
-  let halo = null;   // 지도 위 기상 등급 표시 레이어
   const forecasts = new Map();   // 항구명(norm) → { at, data }
   const FORECAST_TTL = 10 * 60 * 1000;
 
@@ -68,14 +67,12 @@
         </div>
         <div class="wx-summary"></div>
         <div class="wx-cards"></div>
-        <label class="wx-toggle"><input type="checkbox" id="wx-halo-toggle"> 지도에 전체 항구 기상 등급 표시</label>
         <div class="wx-foot">위험: 파고 3m↑ · 풍속 14m/s↑ · 시정 1km↓<br>주의: 파고 2m↑ · 풍속 10m/s↑ · 시정 3km↓</div>
       </div>`;
     document.body.appendChild(panel);
 
     panel.querySelector('.wx-tab').addEventListener('click', () => setOpen(panel.classList.contains('wx-closed')));
     panel.querySelector('.wx-close').addEventListener('click', () => setOpen(false));
-    panel.querySelector('#wx-halo-toggle').addEventListener('change', (e) => toggleHalo(e.target.checked));
     panel.addEventListener('click', (e) => {
       if (e.target.closest('[data-wx-open-drawer]')) setDrawer(true);
     });
@@ -183,7 +180,6 @@
     }
     const lv = w.level || '미상';
     const why = reasons(w);
-    const time = w.observedAt ? w.observedAt.slice(11, 16) : '-';
     return `
       <div class="wx-card" style="--lv:${COLORS[lv]}">
         <div class="wx-card-head">
@@ -203,7 +199,6 @@
           <dt>수온</dt><dd>${fmt(w.seaTempC, '℃')}</dd>
           <dt>강수</dt><dd>${fmt(w.precipMm, ' mm')}</dd>
         </dl>
-        <div class="wx-obs">${time} 관측</div>
         ${forecastBlock(w.portName)}
       </div>`;
   }
@@ -251,7 +246,6 @@
       refreshedAt && refreshedAt.length > 15 ? `${refreshedAt.slice(11, 16)} 갱신` : '';
     const dot = panel.querySelector('.wx-tab-dot');
     dot.style.background = s.lv ? COLORS[s.lv] : 'transparent';
-    if (halo) drawHalo();
     renderDrawer();
   }
 
@@ -490,45 +484,26 @@
       const first = lastKey === null;
       lastKey = key;
       render();
-      // 항구를 새로 고르면 패널을 자동으로 펼침 (처음 페이지 열 때는 접힌 상태 유지)
-      if (!first && key !== '|') setOpen(true);
+      if (key === '|') {
+        // 선택초기화(또는 아직 선택 전): 기상 패널·72시간 그래프 바를 닫고 숨김
+        setOpen(false);
+        setDrawer(false);
+        setVisible(false);
+      } else {
+        setVisible(true);
+        // 항구를 새로 고르면 패널을 자동으로 펼침 (처음 페이지 열 때는 접힌 상태 유지)
+        if (!first) setOpen(true);
+      }
     }
   }
 
-  // ---------- 지도 표시 (선택) ----------
-  function getMap() {
-    // map.js의 전역 const map 을 사용 (map.js 수정 없음)
-    try { return typeof map !== 'undefined' && map && map.addLayer ? map : null; } catch (e) { return null; }
-  }
-
-  function drawHalo() {
-    const m = getMap();
-    if (!m || !window.L) return;
-    if (!halo) halo = L.layerGroup();
-    halo.clearLayers();
-    byName.forEach((w) => {
-      if (!has(w.lat) || !has(w.lon)) return;
-      L.circleMarker([w.lat, w.lon], {
-        radius: 16,
-        stroke: true,
-        color: COLORS[w.level] || COLORS['미상'],
-        weight: 3,
-        fillOpacity: 0.15,
-        interactive: false,   // 클릭은 항구 마커(⚓)로 그대로 전달
-      }).addTo(halo);
+  /** 항구를 하나도 고르지 않았을 때는 '기상' 탭과 그래프 손잡이까지 전부 숨김 */
+  function setVisible(show) {
+    ['wx-panel', 'wx-drawer'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = show ? '' : 'none';
     });
-    if (!m.hasLayer(halo)) halo.addTo(m);
-  }
-
-  function toggleHalo(on) {
-    const m = getMap();
-    if (!m) return;
-    if (on) {
-      drawHalo();
-    } else if (halo) {
-      m.removeLayer(halo);
-      halo = null;
-    }
+    if (show) place();
   }
 
   // ---------- 시작 ----------
