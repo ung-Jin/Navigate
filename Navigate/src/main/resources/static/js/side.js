@@ -1,9 +1,7 @@
 // 선택한 항구의 이름만 sessionStorage에 저장 
-// 키 이름: startPort(출발지), endPort(도착지)   값 예시: '부산항'
-// 좌표가 필요하면 이 이름으로 DB(ports 테이블)에서 찾으면 됨
+// 키 이름: startPort(출발지), endPort(도착지) 
 
-// F5(새로고침)로 페이지를 다시 열었으면 선택한 출발지/도착지를 비움
-// (이 파일이 맨 먼저 실행되므로 기상 패널·영상 등 다른 코드가 읽기 전에 지워짐)
+
 if (performance.getEntriesByType('navigation')[0].type === 'reload') {
   sessionStorage.removeItem('startPort');
   sessionStorage.removeItem('endPort');

@@ -16,39 +16,88 @@ body{
   flex: 1;
   min-height: 0;
 }
+/* 헤더 높이·사이드 폭은 정수 px 로 맞춤
+   -> 지도가 반 픽셀(예: 52.5px) 위치에서 시작하면 지도·마커가 전부 흐리게 그려짐 */
 .header-div{
+  height: 64px;
+  flex-shrink: 0;
   border: 1px solid black;
 }
 
 .side-div{
-  width: 15%;
+  width: round(15%, 1px);  /* 15% 를 1px 단위로 반올림 */
   overflow: hidden;
   border-right: 1px solid black;
 }
 .map-div{
-  width: 85%;
+  flex: 1;  /* 사이드를 뺀 나머지 전부 */
 }
 
 #map{
   height: 100%;
 }
 
-/* 항구 마커(⚓) */
-.port-marker{
-  font-size: 20px;
-  text-align: center;
-  line-height: 24px;
+/* leaflet.css 가 이 파일보다 나중에 불러와져서, 같은 우선순위면 Leaflet 기본값이 이김
+   -> 아래 규칙은 앞에 .leaflet-marker-icon / .leaflet-tooltip 을 붙여 우선순위를 높임 */
+
+/* 항구 마커: 흰 원 안의 남색 닻 (닻 그림은 map.js). 테두리는 정수 px 이어야 선명함 */
+.leaflet-marker-icon.port-marker{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #1e3a8a;
+  color: #1e3a8a;  /* 닻 색 */
+}
+.leaflet-marker-icon.port-marker.port-selected{  /* 선택한 출발지/도착지 */
+  background: #1d4ed8;
+  border-color: #fff;
+  color: #fff;
 }
 
-/* 항구 이름표 */
+/* 지도 위 모든 툴팁 글자 (항구 이름표 + 교통·안전진단 정보 창) */
 .leaflet-tooltip{
   font-size: 12px;
   font-weight: bold;
 }
 
-/* 선택한(출발지/도착지) 항구 이름표 — 다시 누르면 취소됨 */
-.leaflet-tooltip.port-selected{
+/* 항구 이름표: 마커와 같은 남색 테두리·글자, 알약 모양 (map.js 의 className: 'port-label') */
+.leaflet-tooltip.port-label{
+  --label-color: #1e3a8a;  /* 테두리·글자·연결선 색 */
+  padding: 3px 9px;
+  border: 1px solid var(--label-color);
+  border-radius: 12px;
+  color: var(--label-color);
+  box-shadow: none;
+}
+.leaflet-tooltip.port-label.port-selected{  /* 선택한 출발지/도착지 */
+  --label-color: #1d4ed8;
   background: #1d4ed8;
-  border-color: #1d4ed8;
   color: #fff;
 }
+
+/* 연결선: Leaflet 기본 삼각형 꼬리 대신 이름표 테두리에서 마커 원까지 2px 선
+   길이 5px = 이름표까지 16px(map.js 간격 10 + Leaflet 여백 6) - 원 반지름 12px + 이름표 테두리 1px
+   --line-x: 위·아래 이름표를 옆으로 민 만큼 선을 반대로 옮겨서 마커 가운데에 맞춤 (map.js 가 넣음) */
+.leaflet-tooltip.port-label:before{
+  border: 0;
+  margin: 0;
+  background: var(--label-color);
+}
+.leaflet-tooltip.port-label.leaflet-tooltip-right:before,
+.leaflet-tooltip.port-label.leaflet-tooltip-left:before{
+  width: 5px;
+  height: 2px;
+  top: calc(50% - 1px);
+}
+.leaflet-tooltip.port-label.leaflet-tooltip-top:before,
+.leaflet-tooltip.port-label.leaflet-tooltip-bottom:before{
+  width: 2px;
+  height: 5px;
+  left: calc(50% + var(--line-x, 0px) - 1px);
+}
+.leaflet-tooltip.port-label.leaflet-tooltip-right:before{ left: -5px; }
+.leaflet-tooltip.port-label.leaflet-tooltip-left:before{ right: -5px; }
+.leaflet-tooltip.port-label.leaflet-tooltip-top:before{ bottom: -5px; }
+.leaflet-tooltip.port-label.leaflet-tooltip-bottom:before{ top: -5px; }

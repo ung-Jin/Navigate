@@ -1,7 +1,6 @@
 // 실시간 항만 영상 (국립해양조사원 HLS 라이브)
-// 영상은 서버를 거치지 않고 브라우저가 원본 서버에서 바로 재생함 (저장·중계 없음)
-// 필요한 것:
-//  - hls.js : 영상(.m3u8)을 받아서 재생하는 라이브러리. 버튼을 눌러 재생할 때 쓰임
+// 영상은 서버를 거치지 않고 브라우저가 원본 서버에서 바로 재생함 
+// 필요한 것: hls.js : 영상(.m3u8)을 받아서 재생하는 라이브러리. 버튼을 눌러 재생할 때 쓰임
 
 // 영상 주소 = cctvBase + '/' + 스트림이름 + '/s.m3u8'
 // 주소 중간의 긴 문자열이 바뀌면 이 상수 한 곳만 고치면 됨
@@ -18,9 +17,9 @@ const cctvStreams = {
   '여수항': 'SeaFog_Yeosu',
   '광양항': 'SeaFog_Yeosu',
   '울산항': 'SeaFog_Ulsan',
-  '부산항': 'SeaFog_Busan',   // 부산항(북항) 카메라
-  '포항항': 'SeaFog_Pohang',  // 포항 영일만항 카메라
-  '묵호항': 'Mukho',          // 해무 CCTV가 아니라 묵호 조위관측소 카메라
+  '부산항': 'SeaFog_Busan',   
+  '포항항': 'SeaFog_Pohang',  
+  '묵호항': 'Mukho',          
 };
 
 const cctvModal = document.getElementById('cctv-modal');
@@ -97,7 +96,6 @@ document.addEventListener('keydown', e => {
 });
 
 // 기상 패널의 날씨 카드 아래에 [항만 영상] 버튼 넣기. 넣었으면 true, 패널이 아직 없으면 false
-// 기상 패널은 weather-panel.js 가 만들어서 언제 생기는지 알 수 없음 -> 아래에서 생길 때까지 0.3초마다 다시 시도
 function cctvAddButton() {
   const cards = document.querySelector('#wx-panel .wx-cards');
   if (!cards) return false;
@@ -109,6 +107,7 @@ function cctvAddButton() {
   cards.insertAdjacentElement('afterend', btn);
   return true;
 }
+
 // 버튼을 달면 반복을 멈춤
 const cctvTimer = setInterval(() => {
   if (cctvAddButton()) clearInterval(cctvTimer);
