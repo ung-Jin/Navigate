@@ -35,8 +35,8 @@ function renderRoute() {
 document.getElementById('find-route-btn').addEventListener('click', () => {
   const start = sessionStorage.getItem('startPort');
   const end = sessionStorage.getItem('endPort');
-  // 자리만 만들어 둔 상태: 경로 계산 담당자가 여기에 호출 코드를 넣으면 됨
-  console.log('경로찾기', start, end);
+  // 경로 계산은 route.js 가 맡는다 (서버 /api/route 를 부르고 지도에 선을 그림)
+  requestRoute(start, end);
 });
 
 // 선택한 출발지/도착지를 sessionStorage에서 지우고 화면 갱신
