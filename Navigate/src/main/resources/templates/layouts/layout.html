@@ -8,6 +8,7 @@
   <link rel="stylesheet" th:href="@{/css/layouts/layout.css}">
   <link rel="stylesheet" th:href="@{/css/traffic.css}">
   <link rel="stylesheet" th:href="@{/css/safety.css}">
+  <link rel="stylesheet" th:href="@{/css/cctv.css}">
   <!-- Leaflet 지도 라이브러리 (css) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -26,6 +27,9 @@
     <div th:replace="~{common/map::mapFragment}"></div>
   </div>
 
+  <!-- 실시간 항만 영상 모달 -->
+  <div th:replace="~{common/cctv::cctvFragment}"></div>
+
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@1.7.2/dist/axios.min.js"></script>
@@ -41,6 +45,9 @@
   <script th:src="@{/js/route.js}"></script>
   <!-- [개발 확인용] 바다 격자 보기 — 완성되면 지워도 됨 -->
   <script th:src="@{/js/route-grid.js}"></script>
+
+  <!-- 실시간 항만 영상 -->
+  <script th:src="@{/js/cctv.js}"></script>
 
 
 </body>

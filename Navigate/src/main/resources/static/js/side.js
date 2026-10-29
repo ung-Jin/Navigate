@@ -1,20 +1,31 @@
 // 선택한 항구의 이름만 sessionStorage에 저장 
-// 키 이름: startPort(출발지), endPort(도착지)   값 예시: '부산항'
-// 좌표가 필요하면 이 이름으로 DB(ports 테이블)에서 찾으면 됨
+// 키 이름: startPort(출발지), endPort(도착지) 
+
+
+if (performance.getEntriesByType('navigation')[0].type === 'reload') {
+  sessionStorage.removeItem('startPort');
+  sessionStorage.removeItem('endPort');
+}
 
 // 항구 클릭 (지도의 마커나 이름표를 누르면 map.js가 호출함)
-// 첫 번째 클릭 = 출발지, 두 번째 클릭 = 도착지, 이미 둘 다 있으면 출발지부터 다시 선택
+//  - 이미 선택된 항구(출발지/도착지)를 또 누르면 그 선택을 취소
+//  - 출발지가 비어 있으면 출발지, 도착지가 비어 있으면 도착지로 선택
+//  - 둘 다 선택된 상태에서 다른 항구를 누르면 그 항구를 새 출발지로 하고 도착지는 비움
 function clickPort(name) {
   const start = sessionStorage.getItem('startPort');
   const end = sessionStorage.getItem('endPort');
 
-  if (!start || end) {
-    // 출발지가 없거나, 둘 다 이미 선택된 상태 -> 새로 출발지부터
+  if (name === start) {
+    sessionStorage.removeItem('startPort');
+  } else if (name === end) {
     sessionStorage.removeItem('endPort');
+  } else if (!start) {
     sessionStorage.setItem('startPort', name);
-  } else if (name !== start) {
-    // 출발지만 있는 상태 -> 도착지 (출발지와 같은 항구는 무시)
+  } else if (!end) {
     sessionStorage.setItem('endPort', name);
+  } else {
+    sessionStorage.setItem('startPort', name);
+    sessionStorage.removeItem('endPort');
   }
   renderRoute();
 }
@@ -24,12 +35,13 @@ function renderRoute() {
   const start = sessionStorage.getItem('startPort');  // 없으면 null
   const end = sessionStorage.getItem('endPort');
 
-  const startName = start || '출발지 선택';
-  const endName = end || '도착지 선택';
-  document.getElementById('route-text').textContent = startName + ' -> ' + endName;
+  document.getElementById('route-text').textContent = (start || '출발지 선택') + ' -> ' + (end || '도착지 선택');
 
   // 둘 다 선택됐을 때만 버튼을 누를 수 있음
   document.getElementById('find-route-btn').disabled = !(start && end);
+
+  // 지도의 항구 이름표 표시도 같이 갱신 (map.js 가 아직 로딩 전이면 건너뜀)
+  if (typeof refreshPortLabels === 'function') refreshPortLabels();
 }
 
 document.getElementById('find-route-btn').addEventListener('click', () => {
