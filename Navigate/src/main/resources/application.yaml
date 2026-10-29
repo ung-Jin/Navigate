@@ -26,3 +26,7 @@ mtis:
   key: ${MTIS_KEY:}
   daily-limit: 150      # 하루 호출 상한 (개발키 500건을 Python 대시보드 등과 나눠 쓰므로 여유 있게)
   cache-dir: cache      # 호출 기록·마지막 스냅샷 저장 폴더 (깃 제외)
+
+# 항만 영상 주소 (국립해양조사원) — 이용조건상 깃에 올리지 않음: .env 의 CCTV_BASE=...
+cctv:
+  base: ${CCTV_BASE:}

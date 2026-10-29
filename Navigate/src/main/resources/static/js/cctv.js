@@ -1,7 +1,7 @@
 // 항만 영상: 국립해양조사원 HLS 라이브를 브라우저가 직접 재생 (우리 서버를 거치지 않고, 저장도 안 함)
 
 // 영상 주소 = cctvBase + '/' + 스트림이름 + '/s.m3u8'
-const cctvBase = 'https://www.khoa.go.kr/SEAFOG/REDACTED/hls/khoa';
+// cctvBase 는 layout.html 이 .env 의 CCTV_BASE 를 넣어 줌 (주소가 깃에 올라가지 않게)
 
 // 항구 이름 -> 스트림 이름
 const cctvStreams = {
