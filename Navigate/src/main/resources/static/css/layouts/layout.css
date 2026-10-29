@@ -65,3 +65,14 @@ body{
   color: #888;
   padding: 3px 0;
 }
+
+/* [개발 확인용] 바다 격자 체크박스 */
+.grid-check{
+  font-size: 11px;
+  color: #666;
+  margin: 4px 0;
+}
+.grid-check #grid-info{
+  margin-left: 4px;
+  color: #999;
+}

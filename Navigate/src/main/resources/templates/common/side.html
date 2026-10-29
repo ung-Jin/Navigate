@@ -12,6 +12,12 @@
     <!-- 경로 계산 결과 (route.js 가 채워줌) -->
     <div id="route-result"></div>
 
+    <!-- [개발 확인용] 바다 격자 보기 — 완성되면 이 줄과 route-grid.js 를 지우면 됨 -->
+    <div class="grid-check">
+      <label><input type="checkbox" id="grid-on"> 바다격자(확인용)</label>
+      <span id="grid-info"></span>
+    </div>
+
     <!-- 볼 시각 (common/when.html) — 교통현황·안전진단 공통 -->
     <div th:replace="~{common/when::whenFragment}"></div>
     <!-- 교통현황 (common/traffic.html) · 안전진단 (common/safety.html) — 제목의 체크박스로 골라 봄 -->
