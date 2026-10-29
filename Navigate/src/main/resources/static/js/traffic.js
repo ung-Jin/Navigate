@@ -6,6 +6,8 @@
 // 지도
 //   - 줌 8~9: 해역 14곳 이름표 (지금 = 선박 수, 미래 = 혼잡 칸 수). 마우스 올리면 해역 범위, 누르면 칸별 보기로
 //   - 줌 10 : 칸(2.8km)마다 흰 경계선 + 칸 색 = 밀집도(지금)·혼잡 지수(미래), 숫자 = 선박 수(지금만, 1척은 점)
+//   - 표시 기준 척수(패널 가로 막대): 지금일 때 N척 이상인 칸만 그리고, 해역 합계도 그 칸들로 셈
+//   - 칸 숫자는 항구 ⚓·이름표 아래 층 → 겹치면 항구 이름이 보임
 
 const CELL_HALF = 0.0125;  // 칸 반지름 (도) — 한 칸 0.025°
 const SHIP_COLOR = '#5b21b6';  // 보라 — 항구(검정 ⚓·흰 이름표), 바다(파랑)와 구분. 주황·빨강은 안전진단(위험 단계)용으로 남겨 둠
@@ -44,8 +46,8 @@ const CELL_LABEL = 2;     // 칸별 보기에서 숫자를 쓰는 최소 척수 
 const BUSY_LEVELS = ['보통', '높음', '매우높음'];  // 혼잡 예보에서 "혼잡 칸"으로 세는 단계
 
 map.createPane('trafficLabel').style.zIndex = 450;  // 해역 이름표: 칸(400) 위, 항구 마커(600) 아래 — 항구 클릭이 가려지지 않게
-map.createPane('trafficNum').style.zIndex = 660;    // 칸 숫자: 항구 이름표(650) 위에 보이게 (클릭 안 받음 → 항구 클릭은 그대로)
-map.createPane('infoTip').style.zIndex = 700;       // 마우스 올리면 뜨는 정보 창: 칸 숫자(660)보다 위 — 글자가 가려지지 않게 (교통·안전진단 공통)
+map.createPane('trafficNum').style.zIndex = 560;    // 칸 숫자: 칸·해역 이름표 위, 항구 ⚓(600)·이름표(650) 아래 — 겹치면 항구 이름이 보이게
+map.createPane('infoTip').style.zIndex = 700;       // 마우스 올리면 뜨는 정보 창: 항구 이름표(650)보다 위 — 글자가 가려지지 않게 (교통·안전진단 공통)
 
 // 마우스 올리면 뜨는 정보 창 — 화면에 항상 하나만, 직접 열고 닫음 (교통·안전진단 공통)
 // Leaflet bindTooltip 은 지도를 끄는 중에 칸에 마우스가 닿으면 끌기가 끝난 뒤에 열어서,
@@ -108,11 +110,17 @@ function trafficCellText(g) {
 }
 const gridTip = g => `<b>${g.near ?? ''}</b><br>${trafficCellText(g)}`;
 
+// 표시 기준 척수 (패널의 가로 막대) — 지금(실시간)일 때만. 예보에는 척수가 없음
+const minShips = () => Number(document.getElementById('tr-min').value);
+const isShown = g => !currentWhen().now || (g.vmtc || 0) >= minShips();
+
 // 지금 보는 시각 자료로 해역·칸 찾기표 다시 만들기
+// 찾기표(안전진단 정보 창용)는 전체 칸, 해역 합계는 기준 척수 이상인 칸만
 function rebuildTraffic() {
   const grids = currentTrafficGrids() || [];
   trafficIndex = new Map(grids.map(g => [cellKey(g.lat, g.lng), g]));
-  trafficZones = grids.length ? buildZones(grids) : [];
+  const shown = grids.filter(isShown);
+  trafficZones = shown.length ? buildZones(shown) : [];
 }
 
 // 지도에 그리기
@@ -201,7 +209,7 @@ function drawCells() {
   const bounds = map.getBounds().pad(0.1);
   currentTrafficGrids().forEach(g => {
     if (!bounds.contains([g.lat, g.lng])) return;
-    if (now && !g.vmtc) return;
+    if (now && (!g.vmtc || g.vmtc < minShips())) return;
     const step = densityStep(now ? g.dnsty : g.index);
     hoverTip(L.rectangle(cellBox(g), {
       renderer: trafficRenderer, color: '#ffffff', weight: 1.5, opacity: 1,
@@ -227,15 +235,32 @@ function drawLegend() {
   }
   if (Math.round(map.getZoom()) >= DETAIL_ZOOM) {
     const steps = [...DENSITY_STEPS].reverse();  // 옅은 것부터
-    box.innerHTML = (now ? '<span class="unit">숫자 = 선박 수 · 점(•) = 1척</span>' : '<span class="unit">예보에는 선박 수가 없음</span>')
+    const numText = minShips() >= CELL_LABEL ? '숫자 = 선박 수' : '숫자 = 선박 수 · 점(•) = 1척';
+    box.innerHTML = (now ? `<span class="unit">${numText}</span>` : '<span class="unit">예보에는 선박 수가 없음</span>')
       + `<span class="legend-row"><span class="unit">색 = ${now ? '밀집도' : '혼잡 지수'}</span>`
       + steps.map((s, i) => `<span class="chip"><i style="background:${s.color}"></i>${i === 0 ? '<1' : s.min + (i === steps.length - 1 ? '+' : '')}</span>`).join('')
       + '<span class="unit">%</span></span>';
   } else {
+    const base = minShips() > 1 ? `해역별 선박 수(${minShips()}척 이상 칸만)` : '해역별 선박 수';
     box.innerHTML = now
-      ? '<span class="unit">숫자 = 해역별 선박 수 · 진한 칸 = 상위 3곳 · 누르면 칸별로</span>'
+      ? `<span class="unit">숫자 = ${base} · 진한 칸 = 상위 3곳 · 누르면 칸별로</span>`
       : '<span class="unit">숫자 = 해역별 혼잡 칸 수(보통 이상) · 진한 칸 = 상위 3곳 · 누르면 칸별로</span>';
   }
+}
+
+// 표시 기준 막대: 값 글자 + 보이는 칸 수, 예보일 때는 쓸 수 없음
+function renderMinFilter() {
+  const input = document.getElementById('tr-min');
+  const out = document.getElementById('tr-min-v');
+  const now = currentWhen().now;
+  input.disabled = !now;
+  if (!now) {
+    out.textContent = '예보는 척수 없음';
+    return;
+  }
+  const grids = currentTrafficGrids() || [];
+  const shown = grids.filter(g => (g.vmtc || 0) >= minShips()).length;
+  out.textContent = `${minShips()}척↑ · ${trFmt(shown)}칸`;
 }
 
 // 숫자 요약 (지금 = 선박, 미래 = 혼잡 예보)
@@ -271,6 +296,7 @@ function renderTrafficPanel() {
 function refreshTraffic() {
   rebuildTraffic();
   renderTrafficPanel();
+  renderMinFilter();
   drawTraffic();
   drawLegend();
   document.dispatchEvent(new CustomEvent('traffic-updated'));  // 안전진단 결합 숫자 다시 계산
@@ -314,6 +340,14 @@ document.getElementById('traffic-panel').classList.toggle('collapsed', !trafficO
 // 켜기 / 끄기 — 끄면 패널이 한 줄로 접히고 지도에서 지움
 document.getElementById('tr-on').addEventListener('change', () => {
   document.getElementById('traffic-panel').classList.toggle('collapsed', !trafficOn());
+  drawTraffic();
+  drawLegend();
+});
+
+// 표시 기준 척수를 바꾸면 해역 합계·칸을 다시 (자료는 그대로, 서버 호출 없음)
+document.getElementById('tr-min').addEventListener('input', () => {
+  rebuildTraffic();
+  renderMinFilter();
   drawTraffic();
   drawLegend();
 });

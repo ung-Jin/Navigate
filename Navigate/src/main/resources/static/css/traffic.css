@@ -17,6 +17,7 @@
   gap: 4px;
   font-size: 14px;
   font-weight: bold;
+  white-space: nowrap;   /* 사이드바가 좁아도 제목이 두 줄로 꺾이지 않게 */
   cursor: pointer;
 }
 .panel.collapsed .panel-body{
@@ -108,6 +109,33 @@ button.kpi{
 }
 button.kpi:hover{
   border-color: #1c5cab;
+}
+
+/* 표시 기준 척수 (가로 막대) */
+.tr-filter{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 11px;
+}
+.tr-filter .k{
+  color: #6b7280;
+  white-space: nowrap;
+}
+.tr-filter input{
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  accent-color: #5b21b6;   /* 교통 보라 */
+}
+.tr-filter output{
+  white-space: nowrap;
+  font-weight: bold;
+}
+.tr-filter input:disabled + output{
+  color: #9ca3af;
+  font-weight: normal;
 }
 
 /* 범례 */
