@@ -27,6 +27,13 @@
         </button>
       </div>
 
+      <!-- 표시 기준 척수: 이 척수 이상인 칸만 지도에 (지금일 때만) -->
+      <div class="tr-filter">
+        <label for="tr-min" class="k">표시 기준</label>
+        <input type="range" id="tr-min" min="1" max="20" step="1" value="1">
+        <output id="tr-min-v" for="tr-min">1척↑</output>
+      </div>
+
       <!-- 범례 -->
       <div id="tr-legend" class="legend"></div>
       <div id="tr-msg" class="msg"></div>

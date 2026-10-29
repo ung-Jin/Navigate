@@ -4,7 +4,7 @@
 //
 // - 위험 등급 '낮음'(대부분)은 그리지 않고 보통·주의·경계 칸만 (위험한 곳만 남게)
 // - 색은 상태색(노랑·주황·빨강) — 교통현황(보라)과 겹치지 않음
-// - 칸 안을 색으로 채움. 교통현황 칸별 보기(줌 10)와 같이 켜면 더 옅게 채우고 테두리를 둘러 교통 칸이 보이게 함
+// - 칸 안을 옅게 채우고 테두리를 두름 (교통현황을 켜든 끄든 같은 모양 — 교통 칸이 비쳐 보이게)
 // - 칸 안 어디에 마우스를 올려도 위험 정보 + (교통현황이 켜져 있으면) 마우스 아래 교통 칸 정보
 //
 // 교통 × 위험 결합 — 교통현황과 같은 시각끼리만 (볼 시각이 하나라 항상 같음)
@@ -58,13 +58,11 @@ function drawRisk() {
   safetyLayer.clearLayers();
   if (!safetyOn() || !riskData || !riskData.grids) return;
 
-  const overTraffic = trafficOn() && Math.round(map.getZoom()) >= DETAIL_ZOOM;  // 교통 칸별 보기와 겹칠 때
   riskData.grids.forEach(g => {
     const color = RISK_COLORS[g.level];
     if (!color) return;
-    const style = overTraffic
-      ? { renderer: safetyRenderer, color, weight: 2, fillColor: color, fillOpacity: 0.35 }
-      : { renderer: safetyRenderer, stroke: false, fillColor: color, fillOpacity: 0.55 };
+    // 교통현황을 켜든 끄든 같은 모양: 옅게 채우고 테두리 — 아래 교통 칸이 비쳐 보임
+    const style = { renderer: safetyRenderer, color, weight: 2, fillColor: color, fillOpacity: 0.35 };
     // 정보 창은 마우스를 따라다니며 마우스 아래 교통 칸이 바뀌면 같이 바뀜 (hoverTip: traffic.js)
     hoverTip(L.rectangle([[g.lat - RISK_HALF[0], g.lng - RISK_HALF[1]], [g.lat + RISK_HALF[0], g.lng + RISK_HALF[1]]], style),
       at => riskTip(g, at))
@@ -175,10 +173,6 @@ document.getElementById('sf-on').addEventListener('change', () => {
 
 // 볼 시각이 바뀌면 그 시각 예보
 document.addEventListener('when-changed', loadRisk);
-
-// 교통 칸별 보기와 겹치는지에 따라 채우기 ↔ 테두리가 바뀌므로 줌이 바뀌면 다시 그림
-map.on('zoomend', drawRisk);
-document.getElementById('tr-on').addEventListener('change', drawRisk);
 
 // 교통 자료가 바뀌면(실시간 1분마다 확인, 혼잡 예보 도착) 결합 숫자 다시 계산
 document.addEventListener('traffic-updated', () => {
