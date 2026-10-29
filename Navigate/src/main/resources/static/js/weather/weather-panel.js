@@ -67,6 +67,7 @@
         </div>
         <div class="wx-summary"></div>
         <div class="wx-cards"></div>
+        <button type="button" class="cctv-open-btn">항만 영상</button>
         <div class="wx-foot">위험: 파고 3m↑ · 풍속 14m/s↑ · 시정 1km↓<br>주의: 파고 2m↑ · 풍속 10m/s↑ · 시정 3km↓</div>
       </div>`;
     document.body.appendChild(panel);
