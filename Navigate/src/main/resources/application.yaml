@@ -4,10 +4,10 @@ spring:
   # API 인증키는 .env 파일에서 읽음 (깃에 올리지 않음) — Navigate/.env (실행 위치가 Navigate 든 저장소 맨 위든 찾음)
   config:
     import: optional:file:./.env[.properties],optional:file:./Navigate/.env[.properties]
-  #데이터베이스 연결 정보
+  # 데이터베이스 연결 정보 — 주소·비밀번호는 깃에 올리지 않고 .env 의 DB_HOST, DB_PASSWORD 에서 읽음
   datasource:
     driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: jdbc:log4jdbc:mariadb://localhost:3306/navigate
+    url: jdbc:log4jdbc:mariadb://${DB_HOST:localhost}:3306/navigate
     username: user
     password: ${DB_PASSWORD:}
 
