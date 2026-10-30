@@ -27,6 +27,9 @@ public class RouteService {
   // 항구 목록(이름·위도·경도)을 DB 에서 읽어 오는 기존 서비스를 그대로 빌려 쓴다.
   private final MainService mainService;
 
+  // 바다/육지 격자. 항구가 바다에 닿아 있는지 확인하는 데 쓴다.
+  private final SeaGrid seaGrid;
+
   // 배 속력 (노트). 1노트 = 1시간에 1해리 가는 속도
   // 화물선·유조선 기준 12노트로 잡았다. 나중에 선종을 고를 수 있게 바꿀 예정.
   private static final double SPEED_KNOT = 12.0;
@@ -58,10 +61,26 @@ public class RouteService {
       return result;
     }
 
+    // ---------- 2. 바다에 닿아 있는 항구인지 확인 ----------
+    // 무역항이라도 내륙 수로에 있으면 화물선·유조선이 드나들 수 없다.
+    // 예: 서울항은 한강 여의도 부근이라 바다까지 29km 떨어져 있고, 그 사이가 전부 육지다.
+    //     (실제로도 경인아라뱃길은 수심 6.3m·4,000톤급 한계라 대형선이 못 지나간다)
+    //
+    // nearestNavigable 이 null = 그 항구 근처에 배가 지날 수 있는 바다 칸이 없다는 뜻.
+    // 항구 이름을 직접 적어 두지 않고 격자로 판정하므로, 나중에 다른 내륙 항만이 늘어도 그대로 걸러진다.
+    if (seaGrid.nearestNavigable(from.getLat(), from.getLng()) == null) {
+      result.setError(inlandMessage(from.getName()));
+      return result;
+    }
+    if (seaGrid.nearestNavigable(to.getLat(), to.getLng()) == null) {
+      result.setError(inlandMessage(to.getName()));
+      return result;
+    }
+
     result.setFrom(from);
     result.setTo(to);
 
-    // ---------- 2. 경로 만들기 ----------
+    // ---------- 3. 경로 만들기 ----------
     // 지금은 출발점 -> 도착점 직선 하나뿐이다.
     // 3단계에서 이 부분이 A* 알고리즘 호출로 바뀐다.
     RoutePathDTO shortest = makeStraightPath(from, to);
@@ -75,6 +94,25 @@ public class RouteService {
     log.info("경로 계산: {} -> {} ({}km)", fromName, toName, shortest.getKm());
 
     return result;
+  }
+
+
+  // 내륙 항구 안내 문구를 만든다.
+  //
+  // 이름 뒤에 붙는 조사가 받침에 따라 달라진다 ("서울항은", "여의도는").
+  // 한글 음절은 유니코드에서 가나다 순으로 이어져 있고, 한 글자가 (초성, 중성, 종성) 조합이라
+  // (글자 - '가') 를 28(종성 개수)로 나눈 나머지가 0이면 받침이 없는 글자다.
+  private String inlandMessage(String portName) {
+    char last = portName.charAt(portName.length() - 1);
+
+    String particle;
+    if (last < '가' || last > '힣') {
+      particle = "은";                                   // 한글이 아니면 그냥 "은"
+    } else {
+      particle = (last - '가') % 28 == 0 ? "는" : "은";   // 나머지 0 = 받침 없음
+    }
+
+    return portName + particle + " 내륙에 있어 화물선·유조선이 드나들 수 없습니다";
   }
 
 
