@@ -4,6 +4,7 @@ import com.green.Navigate.main.dto.PortDTO;
 import com.green.Navigate.main.service.MainService;
 import com.green.Navigate.route.dto.RouteDTO;
 import com.green.Navigate.route.dto.RoutePathDTO;
+import com.green.Navigate.route.util.GeoUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,10 +15,9 @@ import java.util.List;
 
 // 경로 계산 담당
 //
-// [1단계 - 지금] 출발 항구와 도착 항구를 잇는 "직선"을 돌려준다.
-//                육지를 뚫고 지나가지만, 화면 연결이 제대로 되는지 먼저 확인하기 위한 것.
-// [2단계 예정] 바다/육지 격자를 만든다.
-// [3단계 예정] A* 알고리즘으로 육지를 피하는 최소경로를 찾는다.
+// [1단계 완료] 출발 항구와 도착 항구를 잇는 경로를 화면까지 연결.
+// [2단계 완료] 바다/육지 격자(SeaGrid)를 만들어 "이 칸이 바다인가"를 알 수 있게 함.
+// [3단계 - 지금] A* 알고리즘으로 바다 칸만 밟아 육지를 피하는 최소경로를 찾는다.
 // [4단계 예정] 교통·안전·날씨 데이터로 칸마다 위험 점수를 매겨 안전경로를 따로 찾는다.
 @Slf4j
 @Service
@@ -27,15 +27,15 @@ public class RouteService {
   // 항구 목록(이름·위도·경도)을 DB 에서 읽어 오는 기존 서비스를 그대로 빌려 쓴다.
   private final MainService mainService;
 
-  // 바다/육지 격자. 항구가 바다에 닿아 있는지 확인하는 데 쓴다.
+  // 바다/육지 격자. 항구가 바다에 닿아 있는지 확인하고, 항구를 가까운 바다 칸으로 옮기는 데 쓴다.
   private final SeaGrid seaGrid;
+
+  // 바다 칸만 밟아 최단 경로를 찾는 알고리즘
+  private final AStar aStar;
 
   // 배 속력 (노트). 1노트 = 1시간에 1해리 가는 속도
   // 화물선·유조선 기준 12노트로 잡았다. 나중에 선종을 고를 수 있게 바꿀 예정.
   private static final double SPEED_KNOT = 12.0;
-
-  // 지구 반지름 (km). 두 지점 사이 거리를 구할 때 쓴다.
-  private static final double EARTH_RADIUS_KM = 6371.0;
 
 
   // 출발 항구 이름, 도착 항구 이름을 받아서 경로를 만들어 돌려준다.
@@ -61,18 +61,23 @@ public class RouteService {
       return result;
     }
 
-    // ---------- 2. 바다에 닿아 있는 항구인지 확인 ----------
+    // ---------- 2. 항구를 바다 칸으로 옮기기 ----------
+    // 항구는 땅에 붙어 있어서 그 칸이 '통과 불가'로 나오는 경우가 많다 (부산항이 있는 칸은 바다가 7%뿐).
+    // 그래서 항구 근처에서 가장 가까운 바다 칸을 찾아 경로의 시작/끝으로 삼는다.
+    //
     // 무역항이라도 내륙 수로에 있으면 화물선·유조선이 드나들 수 없다.
     // 예: 서울항은 한강 여의도 부근이라 바다까지 29km 떨어져 있고, 그 사이가 전부 육지다.
     //     (실제로도 경인아라뱃길은 수심 6.3m·4,000톤급 한계라 대형선이 못 지나간다)
     //
-    // nearestNavigable 이 null = 그 항구 근처에 배가 지날 수 있는 바다 칸이 없다는 뜻.
+    // nearestNavigable 이 null = 그 항구 15km 안에 배가 지날 수 있는 바다 칸이 없다는 뜻.
     // 항구 이름을 직접 적어 두지 않고 격자로 판정하므로, 나중에 다른 내륙 항만이 늘어도 그대로 걸러진다.
-    if (seaGrid.nearestNavigable(from.getLat(), from.getLng()) == null) {
+    int[] startCell = seaGrid.nearestNavigable(from.getLat(), from.getLng());
+    if (startCell == null) {
       result.setError(inlandMessage(from.getName()));
       return result;
     }
-    if (seaGrid.nearestNavigable(to.getLat(), to.getLng()) == null) {
+    int[] goalCell = seaGrid.nearestNavigable(to.getLat(), to.getLng());
+    if (goalCell == null) {
       result.setError(inlandMessage(to.getName()));
       return result;
     }
@@ -80,18 +85,25 @@ public class RouteService {
     result.setFrom(from);
     result.setTo(to);
 
-    // ---------- 3. 경로 만들기 ----------
-    // 지금은 출발점 -> 도착점 직선 하나뿐이다.
-    // 3단계에서 이 부분이 A* 알고리즘 호출로 바뀐다.
-    RoutePathDTO shortest = makeStraightPath(from, to);
+    // ---------- 3. 바닷길 찾기 (A*) ----------
+    long startedAt = System.currentTimeMillis();
 
+    List<double[]> seaPath = aStar.find(startCell, goalCell);
+    if (seaPath == null) {
+      result.setError("두 항구를 잇는 바닷길을 찾지 못했습니다");
+      return result;
+    }
+
+    RoutePathDTO shortest = makePath(from, to, seaPath);
     result.setShortest(shortest);
 
-    // 안전경로도 1단계에서는 같은 직선을 넣어 둔다.
-    // 4단계에서 위험도를 반영한 다른 경로로 바뀔 예정.
-    result.setSafe(makeStraightPath(from, to));
+    // 안전경로는 아직 최소경로와 같다.
+    // 4단계에서 칸마다 위험 점수를 매겨, 위험한 곳을 돌아가는 다른 경로로 바뀐다.
+    result.setSafe(makePath(from, to, seaPath));
 
-    log.info("경로 계산: {} -> {} ({}km)", fromName, toName, shortest.getKm());
+    log.info("경로 계산: {} -> {} ({}km, 지점 {}개, {}ms)",
+        fromName, toName, shortest.getKm(), shortest.getCoords().size(),
+        System.currentTimeMillis() - startedAt);
 
     return result;
   }
@@ -128,19 +140,23 @@ public class RouteService {
   }
 
 
-  // 두 항구를 잇는 직선 경로를 만든다. (1단계용 임시)
-  private RoutePathDTO makeStraightPath(PortDTO from, PortDTO to) {
+  // A* 가 찾은 바닷길 앞뒤에 항구 좌표를 붙이고, 거리·시간을 계산한다.
+  //
+  // A* 는 바다 칸 가운데를 이은 경로만 돌려준다.
+  // 거기에 실제 항구 위치를 앞뒤로 붙여야 "항구에서 항구까지" 가 된다.
+  private RoutePathDTO makePath(PortDTO from, PortDTO to, List<double[]> seaPath) {
 
-    // 경로가 지나는 점들을 담을 목록
+    // 경로가 지나는 점들 [위도, 경도]
     List<double[]> coords = new ArrayList<>();
+    coords.add(new double[]{from.getLat(), from.getLng()});   // 출발 항구
+    coords.addAll(seaPath);                                   // 바닷길
+    coords.add(new double[]{to.getLat(), to.getLng()});       // 도착 항구
 
-    // 출발점 [위도, 경도]
-    coords.add(new double[]{from.getLat(), from.getLng()});
-    // 도착점 [위도, 경도]
-    coords.add(new double[]{to.getLat(), to.getLng()});
-
-    // 거리 계산
-    double km = distanceKm(from.getLat(), from.getLng(), to.getLat(), to.getLng());
+    // 점과 점 사이 거리를 모두 더해 전체 거리를 구한다.
+    double km = 0;
+    for (int i = 1; i < coords.size(); i++) {
+      km += GeoUtil.distanceKm(coords.get(i - 1), coords.get(i));
+    }
 
     RoutePathDTO path = new RoutePathDTO();
     path.setCoords(coords);
@@ -149,29 +165,6 @@ public class RouteService {
     path.setHours(round1((km / 1.852) / SPEED_KNOT));     // 해리 / 노트 = 시간
 
     return path;
-  }
-
-
-  // 두 지점 사이의 거리를 km 로 구한다. (하버사인 공식)
-  //
-  // 지구는 둥글기 때문에 평면에서처럼 피타고라스로 구하면 먼 거리일수록 오차가 커진다.
-  // 하버사인은 구(球) 위의 두 점 사이 최단 거리를 구하는 공식이다.
-  private double distanceKm(double lat1, double lng1, double lat2, double lng2) {
-
-    // 각도(도) 를 라디안으로 바꾼다. 삼각함수는 라디안을 쓰기 때문.
-    double radLat1 = Math.toRadians(lat1);
-    double radLat2 = Math.toRadians(lat2);
-    double diffLat = Math.toRadians(lat2 - lat1);
-    double diffLng = Math.toRadians(lng2 - lng1);
-
-    // 하버사인 공식
-    double a = Math.sin(diffLat / 2) * Math.sin(diffLat / 2)
-             + Math.cos(radLat1) * Math.cos(radLat2)
-             * Math.sin(diffLng / 2) * Math.sin(diffLng / 2);
-
-    double c = 2 * Math.asin(Math.sqrt(a));
-
-    return EARTH_RADIUS_KM * c;
   }
 
 

@@ -52,6 +52,16 @@ public class RouteApiController {
     int colFrom = seaGrid.col(minLng);
     int colTo = seaGrid.col(maxLng);
 
+    // 칸이 500m 라서 넓은 범위를 그대로 보내면 수만 개가 되어 화면이 멈춘다.
+    int MAX_CELLS = 20000;
+    if ((long) (rowTo - rowFrom + 1) * (colTo - colFrom + 1) > MAX_CELLS) {
+      Map<String, Object> tooMany = new HashMap<>();
+      tooMany.put("cell", SeaGrid.CELL);
+      tooMany.put("cells", cells);
+      tooMany.put("tooWide", true);     // 화면에서 "더 확대하세요" 안내에 쓴다
+      return tooMany;
+    }
+
     for (int r = rowFrom; r <= rowTo; r++) {
       for (int c = colFrom; c <= colTo; c++) {
         double fraction = seaGrid.seaFraction(r, c);

@@ -24,9 +24,9 @@ function loadGrid() {
     return;
   }
 
-  // 너무 넓은 범위를 한 번에 받으면 칸이 수만 개가 되어 느려진다.
-  // 줌 9 이상(=충분히 확대했을 때)만 그린다.
-  if (map.getZoom() < 9) {
+  // 칸이 500m 라서 넓은 범위를 한 번에 받으면 수만 개가 되어 느려진다.
+  // 충분히 확대했을 때만 그린다.
+  if (map.getZoom() < 11) {
     gridLayer.clearLayers();
     showGridMessage('지도를 더 확대하면 격자가 보입니다');
     return;
@@ -55,6 +55,12 @@ function loadGrid() {
 // 받은 칸 목록을 네모로 그린다.
 function drawGrid(data) {
   gridLayer.clearLayers();
+
+  // 서버가 "범위가 너무 넓다"고 알려준 경우
+  if (data.tooWide) {
+    showGridMessage('지도를 더 확대하면 격자가 보입니다');
+    return;
+  }
 
   // 칸 크기의 절반. 칸 가운데 좌표에서 이만큼 더하고 빼면 네모가 된다.
   const half = data.cell / 2;

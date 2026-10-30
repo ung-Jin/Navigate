@@ -3,8 +3,8 @@
 // map.js 다음에 불러와야 한다 (map 변수를 쓰기 때문).
 // side.js 의 '경로찾기' 버튼이 이 파일의 requestRoute() 를 부른다.
 //
-// [1단계 - 지금] 서버가 직선 하나를 주고, 그걸 그대로 그린다. 육지를 뚫고 지나간다.
-// [3단계 예정] 서버가 육지를 피해 꺾인 선을 주면, 이 파일은 고칠 것 없이 그대로 그려진다.
+// 서버(A*)가 바다 칸만 밟은 좌표 목록을 주면 그대로 선으로 잇는다.
+// 좌표가 2개든 20개든 그리는 코드는 같아서, 경로 계산 방식이 바뀌어도 이 파일은 고칠 것이 없다.
 
 
 // 경로 선을 담아 둘 레이어. 새로 계산할 때마다 이 레이어만 비우면 이전 선이 지워진다.
@@ -56,8 +56,8 @@ function drawRoute(data) {
   }).addTo(routeLayer);
 
   // ---------- 2. 안전경로 (파란 실선) ----------
-  // 1단계에서는 최소경로와 좌표가 같아서 선이 겹쳐 보인다.
-  // 4단계에서 진짜 안전경로가 들어오면 다른 길로 갈라진다.
+  // 지금은 최소경로와 좌표가 같아서 선이 겹쳐 보인다.
+  // 날씨·교통·사고위험을 반영하면 위험한 곳을 돌아가는 다른 길로 갈라진다.
   L.polyline(data.safe.coords, {
     color: ROUTE_COLOR_SAFE,
     weight: 4
@@ -87,7 +87,7 @@ function showRouteResult(data) {
       '<span class="route-label" style="color:' + ROUTE_COLOR_SAFE + '">안전경로</span>' +
       '<span>' + data.safe.km + 'km · ' + data.safe.hours + '시간</span>' +
     '</div>' +
-    '<div class="route-note">※ 1단계: 아직 직선입니다 (육지를 지나감)</div>';
+    '<div class="route-note">※ 안전경로는 아직 최소경로와 같습니다 (날씨·교통 반영은 다음 단계)</div>';
 }
 
 
