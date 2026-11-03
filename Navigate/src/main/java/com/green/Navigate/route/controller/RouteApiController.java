@@ -26,11 +26,15 @@ public class RouteApiController {
   // 경로찾기: 출발 항구 이름 -> 도착 항구 이름
   //
   // 호출 예: /api/route?from=부산항&to=울산항
+  //          /api/route?from=부산항&to=울산항&date=20261103&time=15
   //
-  // 돌려주는 것: 최소경로 + 안전경로 (지금은 둘 다 직선)
+  // date·time 은 출항 시각 (없으면 지금). 그 시각의 예보로 위험도를 매긴다.
+  // 돌려주는 것: 최소경로 + 안전경로 + 두 경로 비교
   @GetMapping("/api/route")
-  public RouteDTO route(@RequestParam String from, @RequestParam String to) {
-    return routeService.findRoute(from, to);
+  public RouteDTO route(@RequestParam String from, @RequestParam String to,
+                        @RequestParam(required = false) String date,
+                        @RequestParam(required = false) String time) {
+    return routeService.findRoute(from, to, date, time);
   }
 
 
@@ -51,6 +55,16 @@ public class RouteApiController {
     int rowTo = seaGrid.row(maxLat);
     int colFrom = seaGrid.col(minLng);
     int colTo = seaGrid.col(maxLng);
+
+    // 칸이 500m 라서 넓은 범위를 그대로 보내면 수만 개가 되어 화면이 멈춘다.
+    int MAX_CELLS = 20000;
+    if ((long) (rowTo - rowFrom + 1) * (colTo - colFrom + 1) > MAX_CELLS) {
+      Map<String, Object> tooMany = new HashMap<>();
+      tooMany.put("cell", SeaGrid.CELL);
+      tooMany.put("cells", cells);
+      tooMany.put("tooWide", true);     // 화면에서 "더 확대하세요" 안내에 쓴다
+      return tooMany;
+    }
 
     for (int r = rowFrom; r <= rowTo; r++) {
       for (int c = colFrom; c <= colTo; c++) {

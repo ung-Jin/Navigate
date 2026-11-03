@@ -23,4 +23,14 @@ public class RoutePathDTO {
 
   // 예상 소요 시간 (시간 단위). 거리 / 속력 으로 계산
   private double hours;
+
+  // 위험 노출량 = Σ(위험도 × km)
+  // 위험한 곳을 오래 지날수록 커진다. 두 경로를 견주는 핵심 지표.
+  private double exposure;
+
+  // 위험도가 높은(0.6 이상) 구간의 길이 (km)
+  private double highKm;
+
+  // 경로에서 만나는 가장 높은 위험도 (0~1)
+  private double maxRisk;
 }

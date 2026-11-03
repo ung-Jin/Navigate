@@ -3,8 +3,8 @@
 // map.js 다음에 불러와야 한다 (map 변수를 쓰기 때문).
 // side.js 의 '경로찾기' 버튼이 이 파일의 requestRoute() 를 부른다.
 //
-// [1단계 - 지금] 서버가 직선 하나를 주고, 그걸 그대로 그린다. 육지를 뚫고 지나간다.
-// [3단계 예정] 서버가 육지를 피해 꺾인 선을 주면, 이 파일은 고칠 것 없이 그대로 그려진다.
+// 서버(A*)가 바다 칸만 밟은 좌표 목록을 주면 그대로 선으로 잇는다.
+// 좌표가 2개든 20개든 그리는 코드는 같아서, 경로 계산 방식이 바뀌어도 이 파일은 고칠 것이 없다.
 
 
 // 경로 선을 담아 둘 레이어. 새로 계산할 때마다 이 레이어만 비우면 이전 선이 지워진다.
@@ -56,8 +56,8 @@ function drawRoute(data) {
   }).addTo(routeLayer);
 
   // ---------- 2. 안전경로 (파란 실선) ----------
-  // 1단계에서는 최소경로와 좌표가 같아서 선이 겹쳐 보인다.
-  // 4단계에서 진짜 안전경로가 들어오면 다른 길로 갈라진다.
+  // 지금은 최소경로와 좌표가 같아서 선이 겹쳐 보인다.
+  // 날씨·교통·사고위험을 반영하면 위험한 곳을 돌아가는 다른 길로 갈라진다.
   L.polyline(data.safe.coords, {
     color: ROUTE_COLOR_SAFE,
     weight: 4
@@ -73,21 +73,51 @@ function drawRoute(data) {
 }
 
 
-// 사이드바에 계산 결과(거리·시간)를 보여 준다.
+// 사이드바에 계산 결과(거리·시간·위험)를 보여 준다.
 function showRouteResult(data) {
   const box = document.getElementById('route-result');
   if (!box) return;
 
-  box.innerHTML =
+  let html =
+    routeBlock('최소경로', ROUTE_COLOR_SHORTEST, data.shortest) +
+    routeBlock('안전경로', ROUTE_COLOR_SAFE, data.safe);
+
+  if (data.same) {
+    // 피할 위험이 없으면 돌아갈 이유도 없다 — 알고리즘이 제대로 동작한 결과다
+    html += '<div class="route-note">두 경로가 같습니다 — 우회할 위험 구간이 없습니다</div>';
+  } else {
+    const km = data.kmPct, ex = data.exposurePct;
+    html += '<div class="route-diff">' +
+      '거리 ' + (km > 0 ? '+' : '') + km + '% · ' +
+      '위험 ' + (ex > 0 ? '+' : '') + ex + '%' +
+    '</div>';
+  }
+
+  // 어떤 자료로 위험도를 매겼는지
+  if (data.sources && data.sources.length) {
+    html += '<div class="route-note">' + data.sources.join('<br>') + '</div>';
+  }
+
+  box.innerHTML = html;
+}
+
+
+// 경로 한 개의 숫자 묶음
+function routeBlock(title, color, path) {
+  let html =
     '<div class="route-row">' +
-      '<span class="route-label" style="color:' + ROUTE_COLOR_SHORTEST + '">최소경로</span>' +
-      '<span>' + data.shortest.km + 'km · ' + data.shortest.hours + '시간</span>' +
-    '</div>' +
-    '<div class="route-row">' +
-      '<span class="route-label" style="color:' + ROUTE_COLOR_SAFE + '">안전경로</span>' +
-      '<span>' + data.safe.km + 'km · ' + data.safe.hours + '시간</span>' +
-    '</div>' +
-    '<div class="route-note">※ 1단계: 아직 직선입니다 (육지를 지나감)</div>';
+      '<span class="route-label" style="color:' + color + '">' + title + '</span>' +
+      '<span>' + path.km + 'km · ' + path.hours + '시간</span>' +
+    '</div>';
+
+  // 위험 노출 = (위험도 × 지나간 거리) 의 합. 위험한 곳을 오래 지날수록 커진다.
+  html += '<div class="route-sub">위험 노출 ' + path.exposure;
+  if (path.highKm > 0) {
+    html += ' · 고위험 ' + path.highKm + 'km';
+  }
+  html += '</div>';
+
+  return html;
 }
 
 
