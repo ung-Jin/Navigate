@@ -43,10 +43,31 @@ public class AStar {
   }
 
 
+  // 항구 둘레 이 거리 안에서는 위험 가중치를 점차 줄인다.
+  //
+  // 항만 근처는 배가 몰리고 사고 이력도 많아 위험도가 높게 나오는데, 항구는 반드시 드나들어야 한다.
+  // 거기에 회피 비용을 그대로 매기면 A* 가 항만 주변을 빙 돌아 진입하려 해서 경로가 이상해진다.
+  // 접안·진입은 도선사가 안내하는 구간이라 애초에 경로 예측 대상이 아니기도 하다.
+  private static final double PORT_EASE_KM = 5.0;
+
+
+  // 거리만 보는 최소경로 (위험도 무시)
+  public List<double[]> find(int[] start, int[] goal) {
+    return find(start, goal, null, 0.0);
+  }
+
+
   // 출발 칸 {행, 열} 에서 도착 칸 {행, 열} 까지 바닷길을 찾는다.
   //
+  // risk  : 칸별 위험도 (null 이면 거리만 봄)
+  // alpha : 위험을 얼마나 피할지. 0 이면 최소경로, 클수록 많이 돌아간다
+  //
+  // 간선 비용 = 거리 × (1 + alpha × 위험도)
+  //   alpha = 0  -> 비용이 곧 거리     = 최소경로
+  //   alpha = 3  -> 위험한 칸이 4배까지 비싸짐 = 안전경로
+  //
   // 돌려주는 것: 지나가는 지점들의 {위도, 경도} 목록. 길이 없으면 null
-  public List<double[]> find(int[] start, int[] goal) {
+  public List<double[]> find(int[] start, int[] goal, RiskMap.Snapshot risk, double alpha) {
 
     int startCell = toIndex(start[0], start[1]);
     int goalCell = toIndex(goal[0], goal[1]);
@@ -58,6 +79,7 @@ public class AStar {
       return one;
     }
 
+    double[] startCenter = seaGrid.center(start[0], start[1]);
     double[] goalCenter = seaGrid.center(goal[0], goal[1]);
 
     Map<Integer, Double> costSoFar = new HashMap<>();   // 칸 -> 출발점에서 여기까지 온 거리(km)
@@ -119,9 +141,16 @@ public class AStar {
           continue;
         }
 
-        // 여기까지 오는 데 드는 거리 = 지금까지 온 거리 + 두 칸 가운데 사이 거리
+        // 여기까지 오는 데 드는 비용 = 지금까지 온 비용 + 두 칸 가운데 사이 거리 × 위험 할증
         double[] next = seaGrid.center(nextRow, nextCol);
-        double newCost = costHere + GeoUtil.distanceKm(here, next);
+        double step = GeoUtil.distanceKm(here, next);
+
+        if (risk != null && alpha > 0) {
+          // 항구 가까이에서는 alpha 를 줄여, 어차피 지나야 하는 구간을 돌아가지 않게 한다
+          double ease = portEase(next, startCenter, goalCenter);
+          step *= 1 + alpha * ease * risk.at(nextRow, nextCol);
+        }
+        double newCost = costHere + step;
 
         // 더 짧은 길을 이미 찾아 뒀으면 넘어간다.
         Double known = costSoFar.get(nextCell);
@@ -143,6 +172,18 @@ public class AStar {
 
     // 큐가 비었는데 도착 못 했다 = 두 칸이 서로 다른 바다 덩어리에 있다
     return null;
+  }
+
+
+  // 출발·도착 항구에 가까울수록 위험 가중치를 줄이는 비율 (0 = 완전히 무시, 1 = 그대로 적용)
+  //
+  //   항구 ●━━━━━━━━━━━━━▶
+  //        0km    5km      먼바다
+  //        0.0 ─── 1.0 ─── 1.0
+  private double portEase(double[] point, double[] startCenter, double[] goalCenter) {
+    double km = Math.min(GeoUtil.distanceKm(point, startCenter),
+                         GeoUtil.distanceKm(point, goalCenter));
+    return Math.min(1.0, km / PORT_EASE_KM);
   }
 
 

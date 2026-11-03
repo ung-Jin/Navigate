@@ -33,13 +33,31 @@ public class RouteService {
   // 바다 칸만 밟아 최단 경로를 찾는 알고리즘
   private final AStar aStar;
 
+  // 칸마다 위험 점수를 매기는 곳 (교통·사고위험 예보·파고·풍속)
+  private final RiskMap riskMap;
+
   // 배 속력 (노트). 1노트 = 1시간에 1해리 가는 속도
   // 화물선·유조선 기준 12노트로 잡았다. 나중에 선종을 고를 수 있게 바꿀 예정.
   private static final double SPEED_KNOT = 12.0;
 
+  // 안전경로가 위험을 얼마나 피할지
+  //
+  // 간선 비용 = 거리 × (1 + alpha × 위험도) 이므로, 3 이면 가장 위험한 칸이 4배까지 비싸진다.
+  // 너무 작으면 최소경로와 똑같아지고, 너무 크면 조금만 위험해도 크게 돌아간다.
+  private static final double SAFE_ALPHA = 3.0;
+
+  // 위험도가 이 값 이상이면 '고위험 구간'으로 센다
+  private static final double HIGH_RISK = 0.6;
+
+  // 위험 노출량을 잴 때 경로를 몇 km 간격으로 짚어 볼지
+  private static final double SAMPLE_KM = 0.5;
+
 
   // 출발 항구 이름, 도착 항구 이름을 받아서 경로를 만들어 돌려준다.
-  public RouteDTO findRoute(String fromName, String toName) {
+  //
+  // date = yyyyMMdd, time = HH — 출항 시각. 둘 다 null 이면 지금 기준.
+  // 시각을 바꾸면 그 시각의 예보로 위험도를 매기므로, 언제 떠나는 게 안전한지 견줄 수 있다.
+  public RouteDTO findRoute(String fromName, String toName, String date, String time) {
 
     RouteDTO result = new RouteDTO();
 
@@ -85,27 +103,58 @@ public class RouteService {
     result.setFrom(from);
     result.setTo(to);
 
-    // ---------- 3. 바닷길 찾기 (A*) ----------
+    // ---------- 3. 위험도 지도 준비 ----------
+    // 교통·사고위험 예보·파고·풍속을 칸별 점수(0~1)로 합친 것
     long startedAt = System.currentTimeMillis();
+    RiskMap.Snapshot risk = riskMap.load(date, time);
 
-    List<double[]> seaPath = aStar.find(startCell, goalCell);
-    if (seaPath == null) {
+    // ---------- 4. 바닷길 두 개 찾기 ----------
+    // 같은 A* 를 alpha 만 바꿔 두 번 돌린다.
+    //   alpha = 0     -> 위험 무시, 거리만  = 최소경로
+    //   alpha = ALPHA -> 위험한 곳을 돌아감 = 안전경로
+    List<double[]> shortPath = aStar.find(startCell, goalCell);
+    if (shortPath == null) {
       result.setError("두 항구를 잇는 바닷길을 찾지 못했습니다");
       return result;
     }
+    List<double[]> safePath = aStar.find(startCell, goalCell, risk, SAFE_ALPHA);
 
-    RoutePathDTO shortest = makePath(from, to, seaPath);
+    RoutePathDTO shortest = makePath(from, to, shortPath, risk);
+    RoutePathDTO safe = safePath == null ? shortest : makePath(from, to, safePath, risk);
+
+    // 돌아갔는데 더 안전하지 않다면 최소경로가 곧 안전경로다
+    if (safe.getExposure() >= shortest.getExposure()) {
+      safe = shortest;
+    }
+
     result.setShortest(shortest);
+    result.setSafe(safe);
+    result.setAlpha(SAFE_ALPHA);
+    result.setSources(risk.getSources());
 
-    // 안전경로는 아직 최소경로와 같다.
-    // 4단계에서 칸마다 위험 점수를 매겨, 위험한 곳을 돌아가는 다른 경로로 바뀐다.
-    result.setSafe(makePath(from, to, seaPath));
+    // ---------- 5. 두 경로 견주기 ----------
+    boolean same = safe == shortest;
+    result.setSame(same);
+    if (!same) {
+      result.setKmPct(percentChange(safe.getKm(), shortest.getKm()));
+      result.setExposurePct(percentChange(safe.getExposure(), shortest.getExposure()));
+    }
 
-    log.info("경로 계산: {} -> {} ({}km, 지점 {}개, {}ms)",
-        fromName, toName, shortest.getKm(), shortest.getCoords().size(),
+    log.info("경로 계산: {} -> {} · 최소 {}km(노출 {}) · 안전 {}km(노출 {}) · {} · {}ms",
+        fromName, toName, shortest.getKm(), shortest.getExposure(),
+        safe.getKm(), safe.getExposure(), same ? "같음" : "갈라짐",
         System.currentTimeMillis() - startedAt);
 
     return result;
+  }
+
+
+  // 최소경로 대비 몇 % 늘었는지 (+) 또는 줄었는지 (-)
+  private Double percentChange(double safeValue, double shortValue) {
+    if (shortValue <= 0) {
+      return null;
+    }
+    return round1((safeValue - shortValue) / shortValue * 100);
   }
 
 
@@ -144,7 +193,7 @@ public class RouteService {
   //
   // A* 는 바다 칸 가운데를 이은 경로만 돌려준다.
   // 거기에 실제 항구 위치를 앞뒤로 붙여야 "항구에서 항구까지" 가 된다.
-  private RoutePathDTO makePath(PortDTO from, PortDTO to, List<double[]> seaPath) {
+  private RoutePathDTO makePath(PortDTO from, PortDTO to, List<double[]> seaPath, RiskMap.Snapshot risk) {
 
     // 경로가 지나는 점들 [위도, 경도]
     List<double[]> coords = new ArrayList<>();
@@ -152,10 +201,36 @@ public class RouteService {
     coords.addAll(seaPath);                                   // 바닷길
     coords.add(new double[]{to.getLat(), to.getLng()});       // 도착 항구
 
-    // 점과 점 사이 거리를 모두 더해 전체 거리를 구한다.
+    // 경로를 따라가며 거리와 위험 지표를 함께 잰다.
+    //
+    // 지점 사이가 수십 km 씩 되기도 해서, 끝점만 보면 중간에 지나는 위험한 칸을 놓친다.
+    // 그래서 0.5km 간격으로 짚어 가며 그 자리의 위험도를 센다.
     double km = 0;
+    double exposure = 0;     // Σ(위험도 × km)
+    double highKm = 0;       // 위험도 0.6 이상인 구간 길이
+    double maxRisk = 0;
+
     for (int i = 1; i < coords.size(); i++) {
-      km += GeoUtil.distanceKm(coords.get(i - 1), coords.get(i));
+      double[] a = coords.get(i - 1);
+      double[] b = coords.get(i);
+      double segment = GeoUtil.distanceKm(a, b);
+      km += segment;
+
+      int steps = Math.max(1, (int) (segment / SAMPLE_KM));
+      double piece = segment / steps;
+
+      for (int s = 0; s < steps; s++) {
+        double t = (s + 0.5) / steps;                   // 조각의 한가운데
+        double lat = a[0] + (b[0] - a[0]) * t;
+        double lng = a[1] + (b[1] - a[1]) * t;
+        double r = risk.at(seaGrid.row(lat), seaGrid.col(lng));
+
+        exposure += r * piece;
+        if (r >= HIGH_RISK) {
+          highKm += piece;
+        }
+        maxRisk = Math.max(maxRisk, r);
+      }
     }
 
     RoutePathDTO path = new RoutePathDTO();
@@ -163,6 +238,9 @@ public class RouteService {
     path.setKm(round1(km));
     path.setNm(round1(km / 1.852));                       // km -> 해리
     path.setHours(round1((km / 1.852) / SPEED_KNOT));     // 해리 / 노트 = 시간
+    path.setExposure(round1(exposure));
+    path.setHighKm(round1(highKm));
+    path.setMaxRisk(Math.round(maxRisk * 100) / 100.0);
 
     return path;
   }

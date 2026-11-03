@@ -26,11 +26,15 @@ public class RouteApiController {
   // 경로찾기: 출발 항구 이름 -> 도착 항구 이름
   //
   // 호출 예: /api/route?from=부산항&to=울산항
+  //          /api/route?from=부산항&to=울산항&date=20261103&time=15
   //
-  // 돌려주는 것: 최소경로 + 안전경로 (지금은 둘 다 직선)
+  // date·time 은 출항 시각 (없으면 지금). 그 시각의 예보로 위험도를 매긴다.
+  // 돌려주는 것: 최소경로 + 안전경로 + 두 경로 비교
   @GetMapping("/api/route")
-  public RouteDTO route(@RequestParam String from, @RequestParam String to) {
-    return routeService.findRoute(from, to);
+  public RouteDTO route(@RequestParam String from, @RequestParam String to,
+                        @RequestParam(required = false) String date,
+                        @RequestParam(required = false) String time) {
+    return routeService.findRoute(from, to, date, time);
   }
 
 

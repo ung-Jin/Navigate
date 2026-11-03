@@ -73,21 +73,51 @@ function drawRoute(data) {
 }
 
 
-// 사이드바에 계산 결과(거리·시간)를 보여 준다.
+// 사이드바에 계산 결과(거리·시간·위험)를 보여 준다.
 function showRouteResult(data) {
   const box = document.getElementById('route-result');
   if (!box) return;
 
-  box.innerHTML =
+  let html =
+    routeBlock('최소경로', ROUTE_COLOR_SHORTEST, data.shortest) +
+    routeBlock('안전경로', ROUTE_COLOR_SAFE, data.safe);
+
+  if (data.same) {
+    // 피할 위험이 없으면 돌아갈 이유도 없다 — 알고리즘이 제대로 동작한 결과다
+    html += '<div class="route-note">두 경로가 같습니다 — 우회할 위험 구간이 없습니다</div>';
+  } else {
+    const km = data.kmPct, ex = data.exposurePct;
+    html += '<div class="route-diff">' +
+      '거리 ' + (km > 0 ? '+' : '') + km + '% · ' +
+      '위험 ' + (ex > 0 ? '+' : '') + ex + '%' +
+    '</div>';
+  }
+
+  // 어떤 자료로 위험도를 매겼는지
+  if (data.sources && data.sources.length) {
+    html += '<div class="route-note">' + data.sources.join('<br>') + '</div>';
+  }
+
+  box.innerHTML = html;
+}
+
+
+// 경로 한 개의 숫자 묶음
+function routeBlock(title, color, path) {
+  let html =
     '<div class="route-row">' +
-      '<span class="route-label" style="color:' + ROUTE_COLOR_SHORTEST + '">최소경로</span>' +
-      '<span>' + data.shortest.km + 'km · ' + data.shortest.hours + '시간</span>' +
-    '</div>' +
-    '<div class="route-row">' +
-      '<span class="route-label" style="color:' + ROUTE_COLOR_SAFE + '">안전경로</span>' +
-      '<span>' + data.safe.km + 'km · ' + data.safe.hours + '시간</span>' +
-    '</div>' +
-    '<div class="route-note">※ 안전경로는 아직 최소경로와 같습니다 (날씨·교통 반영은 다음 단계)</div>';
+      '<span class="route-label" style="color:' + color + '">' + title + '</span>' +
+      '<span>' + path.km + 'km · ' + path.hours + '시간</span>' +
+    '</div>';
+
+  // 위험 노출 = (위험도 × 지나간 거리) 의 합. 위험한 곳을 오래 지날수록 커진다.
+  html += '<div class="route-sub">위험 노출 ' + path.exposure;
+  if (path.highKm > 0) {
+    html += ' · 고위험 ' + path.highKm + 'km';
+  }
+  html += '</div>';
+
+  return html;
 }
 
 

@@ -80,6 +80,18 @@ body{
   color: #888;
   padding: 3px 0;
 }
+/* 경로별 위험 지표 */
+.route-sub{
+  color: #666;
+  font-size: 11px;
+  padding: 0 0 4px 0;
+}
+/* 두 경로 비교 (거리 +N% · 위험 -M%) */
+.route-diff{
+  font-weight: bold;
+  padding: 4px 0;
+  border-top: 1px solid #ddd;
+}
 
 /* [개발 확인용] 바다 격자 체크박스 */
 .grid-check{
