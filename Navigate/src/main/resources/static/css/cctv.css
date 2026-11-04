@@ -8,7 +8,7 @@
   padding: 9px 0;
   border: none;               /* 흰 패널 위에서 눈에 띄게 파란색으로 채움 */
   border-radius: 6px;
-  background: #1d4ed8;
+  background: var(--route-blue);
   color: #fff;
   font: inherit;
   font-size: 14px;
@@ -31,7 +31,7 @@
 .cctv-box {
   max-width: 96vw;            /* 너비는 안의 영상 개수에 맞게 (영상 1개면 작게, 2개면 크게) */
   padding: 16px 20px;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
   font: 13px/1.45 system-ui, -apple-system, "Malgun Gothic", sans-serif;
   color: #222;
@@ -41,19 +41,19 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
-  font-size: 15px;
+  font-size: 14px;
 }
 .cctv-close {
   border: none;
   background: none;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
 }
 
 /* 항구별 영상 칸 (화면이 좁으면 칸이 같이 줄어듦) */
 .cctv-body { display: flex; gap: 16px; align-items: flex-start; }
 .cctv-item { width: 780px; flex: 0 1 auto; min-width: 0; }
-.cctv-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.cctv-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
 .cctv-item video { display: block; width: 100%; background: #000; }
 
 /* 안내 문구 (영상이 없는 항구) */
@@ -62,8 +62,8 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 16 / 9;        /* 영상(16:9)과 같은 크기 -> 영상 가운데 높이에 글자가 옴 */
-  color: #666;
+  color: var(--muted);
   text-align: center;
 }
 
-.cctv-source { margin-top: 10px; color: #666; font-size: 11px; }
+.cctv-source { margin-top: 10px; color: var(--muted); font-size: 11px; }

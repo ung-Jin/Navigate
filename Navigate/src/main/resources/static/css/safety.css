@@ -12,7 +12,7 @@
 .tip-hr{
   margin: 3px 0;
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--line-card);
 }
 
 /* 위험 칸 위 마우스 (칸이 칠해진 곳만) */

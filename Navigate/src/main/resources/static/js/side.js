@@ -30,15 +30,14 @@ function clickPort(name) {
   renderRoute();
 }
 
-// 사이드바 화면 갱신: "출발지 -> 도착지" 글자 + 버튼 활성화
+// 사이드바 화면 갱신: 출발지·도착지 입력 칸 + 버튼 활성화
 function renderRoute() {
   const start = sessionStorage.getItem('startPort');  // 없으면 null
   const end = sessionStorage.getItem('endPort');
 
-  document.getElementById('route-text').textContent = (start || '출발지 선택') + ' -> ' + (end || '도착지 선택');
-
-  // 둘 다 선택됐을 때만 버튼을 누를 수 있음
-  document.getElementById('find-route-btn').disabled = !(start && end);
+  // 값이 없으면 빈 칸 -> placeholder("출발지 입력")가 대신 보임
+  document.getElementById('start-input').value = start || '';
+  document.getElementById('end-input').value = end || '';
 
   // 지도의 항구 이름표 표시도 같이 갱신 (map.js 가 아직 로딩 전이면 건너뜀)
   if (typeof refreshPortLabels === 'function') refreshPortLabels();
@@ -47,6 +46,7 @@ function renderRoute() {
 document.getElementById('find-route-btn').addEventListener('click', () => {
   const start = sessionStorage.getItem('startPort');
   const end = sessionStorage.getItem('endPort');
+  if (!start || !end) return;  // 출발지·도착지가 다 선택되지 않았으면 눌러도 아무 반응 없음
   // 경로 계산은 route.js 가 맡는다 (서버 /api/route 를 부르고 지도에 선을 그림)
   requestRoute(start, end);
 });
@@ -57,6 +57,20 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   sessionStorage.removeItem('endPort');
   renderRoute();
 });
+
+// 입력 칸에 이름을 치고 칸을 벗어나면: 항구 이름이 맞으면 선택, 아니면 선택 취소
+function inputPort(inputId, key) {
+  document.getElementById(inputId).addEventListener('change', (e) => {
+    if (document.querySelector('#port-list option[value="' + e.target.value + '"]')) {
+      sessionStorage.setItem(key, e.target.value);
+    } else {
+      sessionStorage.removeItem(key);
+    }
+    renderRoute();  // 칸·버튼·지도를 저장값에 맞춤 (없는 이름이면 칸이 비워짐)
+  });
+}
+inputPort('start-input', 'startPort');
+inputPort('end-input', 'endPort');
 
 // 페이지를 열 때 저장된 값이 있으면 바로 보여줌
 renderRoute();

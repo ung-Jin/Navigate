@@ -1,33 +1,58 @@
-/* 교통현황 패널 (side 안) — 스크롤이 생기지 않게 높이를 작게 유지 */
-.panel{
-  padding: 8px;
-  border-top: 1px solid #d9dde3;
+/* 교통현황·안전진단 패널 (side 안) — 두 패널의 제목 버튼은 가로 한 줄, 내용은 그 아래 (.panels 가 격자) */
+.panels{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 8px;
+  padding: 12px 8px 8px;  /* 위 12px: 소제목 선(.side-title)과 토글 버튼 사이 */
   font-size: 13px;
 }
+.panel{
+  display: contents;  /* 패널 상자는 없애고, 안의 제목(.panel-head)·내용(.panel-body)이 격자 칸이 되게 함 */
+}
+#traffic-panel .panel-head{ grid-column: 1; grid-row: 1; }
+#safety-panel .panel-head{ grid-column: 2; grid-row: 1; }
+#traffic-panel .panel-body{ grid-column: 1 / -1; grid-row: 2; margin-top: 8px; }
+#safety-panel .panel-body{ grid-column: 1 / -1; grid-row: 3; margin-top: 8px; }
 .panel-head{
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  display: flex;  /* 아래 여백은 두지 않음: 켜진 쪽만 여백이 생기면 반대쪽 버튼이 같이 커짐 (여백은 위의 .panel-body 가 가짐) */
 }
 /* 제목 체크박스: 끄면 패널 내용을 접음 (교통현황·안전진단 공통) */
 .panel-toggle{
+  position: relative;
+  flex: 1;                  /* 칸을 가득 채움 (두 버튼이 같은 폭) */
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  padding: 4px 12px;
+  border: 1px solid var(--line-control);
+  border-radius: 6px;
+  background: #fff;
   font-size: 14px;
   font-weight: bold;
   white-space: nowrap;   /* 사이드바가 좁아도 제목이 두 줄로 꺾이지 않게 */
   cursor: pointer;
 }
+/* 체크박스는 안 보이게 숨기고(키보드·JS 는 그대로 동작) 글자 칸 전체를 on/off 버튼처럼 씀 */
+.panel-toggle input{
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.panel-toggle:has(input:checked){  /* 켜진 상태 */
+  border-color: var(--route-blue);
+  background: var(--route-blue);
+  color: #fff;
+}
+.panel-toggle:has(input:focus-visible){  /* 키보드로 이동했을 때 */
+  outline: 2px solid var(--route-blue);
+  outline-offset: 2px;
+}
 .panel.collapsed .panel-body{
   display: none;
 }
-.panel.collapsed .panel-head{
-  margin-bottom: 0;
-}
 .muted{
-  color: #6b7280;
+  color: var(--muted);
   font-size: 11px;
 }
 
@@ -35,28 +60,31 @@
 .when-bar{
   display: flex;
   gap: 4px;
-  padding: 6px 8px;
-  border-top: 1px solid #d9dde3;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--line);  /* 사이드 맨 위에 있으므로 아래쪽 선 (위쪽은 헤더 선이 있음) */
   font-size: 13px;
 }
 .when-bar .seg{
   flex: 1;
   margin-bottom: 0;
 }
+.when-bar .seg span{
+  padding: 5px 0;
+}
 .when-bar select{
   font: inherit;
   padding: 0 2px;
-  border: 1px solid #c8ced6;
+  border: 1px solid var(--line-control);
   border-radius: 6px;
 }
 .when-bar select:disabled{
-  color: #9ca3af;
+  color: var(--muted);
 }
 
 /* 버튼 묶음 (볼 시각 등) */
 .seg{
   display: flex;
-  border: 1px solid #c8ced6;
+  border: 1px solid var(--line-control);
   border-radius: 6px;
   overflow: hidden;
   margin-bottom: 6px;
@@ -74,7 +102,7 @@
   padding: 3px 0;
 }
 .seg input:checked + span{
-  background: #1c5cab;
+  background: var(--route-blue);
   color: #fff;
 }
 
@@ -88,14 +116,14 @@
   display: flex;
   flex-direction: column;
   padding: 4px 6px;
-  border: 1px solid #e3e6ea;
+  border: 1px solid var(--line-card);
   border-radius: 6px;
   background: #fff;
   font: inherit;
   text-align: left;
 }
 .kpi .k{
-  color: #6b7280;
+  color: var(--muted);
   font-size: 11px;
 }
 .kpi b{
@@ -108,7 +136,7 @@ button.kpi{
   cursor: pointer;   /* 누르면 이동하는 카드만 */
 }
 button.kpi:hover{
-  border-color: #1c5cab;
+  border-color: var(--route-blue);
 }
 
 /* 표시 기준 척수 (가로 막대) */
@@ -120,7 +148,7 @@ button.kpi:hover{
   font-size: 11px;
 }
 .tr-filter .k{
-  color: #6b7280;
+  color: var(--muted);
   white-space: nowrap;
 }
 .tr-filter input{
@@ -134,7 +162,7 @@ button.kpi:hover{
   font-weight: bold;
 }
 .tr-filter input:disabled + output{
-  color: #9ca3af;
+  color: var(--muted);
   font-weight: normal;
 }
 
@@ -159,7 +187,7 @@ button.kpi:hover{
   border-radius: 2px;
 }
 .legend .unit{
-  color: #6b7280;
+  color: var(--muted);
 }
 .legend .legend-row{
   display: flex;
@@ -180,7 +208,7 @@ button.kpi:hover{
   align-items: center;
   padding: 3px 8px;
   border: 1.5px solid #fff;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #7c3aed;
   color: #fff;
   white-space: nowrap;
@@ -189,10 +217,10 @@ button.kpi:hover{
   cursor: pointer;
 }
 .tr-zone b{
-  font-size: 15px;
+  font-size: 14px;
 }
 .tr-zone span{
-  font-size: 10px;
+  font-size: 11px;
 }
 .tr-zone.top{
   background: #4c1d95;
@@ -201,7 +229,7 @@ button.kpi:hover{
   outline: 2px solid #f5b400;
 }
 
-/* 지도: 칸별 선박 수 (줌 10) — 2척 이상 숫자, 1척 점 */
+/* 지도: 칸별 선박 수 (줌 10) — 2척 이상만 숫자 */
 .tr-cell-num{
   background: none;
   border: none;
@@ -215,21 +243,10 @@ button.kpi:hover{
   text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
   white-space: nowrap;
 }
-.tr-cell-num span.dot{
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #4c1d95;
-  box-shadow: 0 0 0 1px #fff;
-}
-/* 밀집도가 진한 칸(10% 이상) 위에서는 흰 글자·흰 점 */
+/* 밀집도가 진한 칸(10% 이상) 위에서는 흰 글자 */
 .tr-cell-num.on-dark span{
   color: #fff;
   text-shadow: 0 0 2px #2e1065, 0 0 2px #2e1065;
-}
-.tr-cell-num.on-dark span.dot{
-  background: #fff;
-  box-shadow: 0 0 0 1px #2e1065;
 }
 
 /* 수집 실패 등 안내 */
