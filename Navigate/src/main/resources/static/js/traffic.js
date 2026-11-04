@@ -5,7 +5,7 @@
 //
 // 지도
 //   - 줌 8~9: 해역 14곳 이름표 (지금 = 선박 수, 미래 = 혼잡 칸 수). 마우스 올리면 해역 범위, 누르면 칸별 보기로
-//   - 줌 10 : 칸(2.8km)마다 흰 경계선 + 칸 색 = 밀집도(지금)·혼잡 지수(미래), 숫자 = 선박 수(지금만, 1척은 점)
+//   - 줌 10 : 칸(2.8km)마다 흰 경계선 + 칸 색 = 밀집도(지금)·혼잡 지수(미래), 숫자 = 선박 수(지금만, 2척 이상)
 //   - 표시 기준 척수(패널 가로 막대): 지금일 때 N척 이상인 칸만 그리고, 해역 합계도 그 칸들로 셈
 //   - 칸 숫자는 항구 ⚓·이름표 아래 층 → 겹치면 항구 이름이 보임
 
@@ -42,7 +42,7 @@ const ZONES = [
   { name: '제주', hub: [33.40, 126.55], at: [33.30, 125.90] },
 ];
 const DETAIL_ZOOM = 10;   // 이 줌부터는 해역 이름표 대신 칸별 보기
-const CELL_LABEL = 2;     // 칸별 보기에서 숫자를 쓰는 최소 척수 (1척은 점)
+const CELL_LABEL = 2;     // 칸별 보기에서 숫자를 쓰는 최소 척수 (1척은 숫자·점 없이 칸 색만)
 const BUSY_LEVELS = ['보통', '높음', '매우높음'];  // 혼잡 예보에서 "혼잡 칸"으로 세는 단계
 
 map.createPane('trafficLabel').style.zIndex = 450;  // 해역 이름표: 칸(400) 위, 항구 마커(600) 아래 — 항구 클릭이 가려지지 않게
@@ -203,7 +203,7 @@ function drawZones() {
 
 // ---------- 칸별 (줌 10) ----------
 
-// 화면 안 칸만. 칸 사이 흰 경계선, 칸 색 = 밀집도(지금)·혼잡 지수(미래), 숫자 = 선박 수(지금만, 1척은 점)
+// 화면 안 칸만. 칸 사이 흰 경계선, 칸 색 = 밀집도(지금)·혼잡 지수(미래), 숫자 = 선박 수(지금만, 2척 이상)
 function drawCells() {
   const now = currentWhen().now;
   const bounds = map.getBounds().pad(0.1);
@@ -212,14 +212,14 @@ function drawCells() {
     if (now && (!g.vmtc || g.vmtc < minShips())) return;
     const step = densityStep(now ? g.dnsty : g.index);
     hoverTip(L.rectangle(cellBox(g), {
-      renderer: trafficRenderer, color: '#ffffff', weight: 1.5, opacity: 1,
-      fillColor: step.color, fillOpacity: 0.85
+      renderer: trafficRenderer, color: '#ffffff', weight: 1.5, opacity: 0.6,
+      fillColor: step.color, fillOpacity: 0.6
     }), gridTip(g)).addTo(trafficLayer);
     if (!now) return;  // 예보에는 선박 수가 없음
-    const html = g.vmtc >= CELL_LABEL ? `<span>${g.vmtc}</span>` : '<span class="dot"></span>';
+    if (g.vmtc < CELL_LABEL) return;  // 1척 칸은 점·숫자 없이 칸 색만
     L.marker([g.lat, g.lng], {
       pane: 'trafficNum', keyboard: false, interactive: false,
-      icon: L.divIcon({ className: 'tr-cell-num' + (step.dark ? ' on-dark' : ''), iconSize: null, html })
+      icon: L.divIcon({ className: 'tr-cell-num' + (step.dark ? ' on-dark' : ''), iconSize: null, html: `<span>${g.vmtc}</span>` })
     }).addTo(trafficLayer);
   });
 }
@@ -235,8 +235,7 @@ function drawLegend() {
   }
   if (Math.round(map.getZoom()) >= DETAIL_ZOOM) {
     const steps = [...DENSITY_STEPS].reverse();  // 옅은 것부터
-    const numText = minShips() >= CELL_LABEL ? '숫자 = 선박 수' : '숫자 = 선박 수 · 점(•) = 1척';
-    box.innerHTML = (now ? `<span class="unit">${numText}</span>` : '<span class="unit">예보에는 선박 수가 없음</span>')
+    box.innerHTML = (now ? `<span class="unit">숫자 = 선박 수 (${CELL_LABEL}척 이상)</span>` : '<span class="unit">예보에는 선박 수가 없음</span>')
       + `<span class="legend-row"><span class="unit">색 = ${now ? '밀집도' : '혼잡 지수'}</span>`
       + steps.map((s, i) => `<span class="chip"><i style="background:${s.color}"></i>${i === 0 ? '<1' : s.min + (i === steps.length - 1 ? '+' : '')}</span>`).join('')
       + '<span class="unit">%</span></span>';
@@ -268,7 +267,6 @@ function renderTrafficPanel() {
   const set = (id, text) => { document.getElementById(id).textContent = text; };
   if (currentWhen().now) {
     const d = trafficData || {};
-    set('tr-time', d.regDt ? d.regDt.slice(5, 16) + ' 기준' : '-');
     set('tr-k1', '선박 수');
     set('tr-k2', '선박 있는 칸');
     set('tr-top-k', '가장 붐비는 칸');
@@ -280,7 +278,6 @@ function renderTrafficPanel() {
   } else {
     const d = trafficForecast || {};
     const c = d.counts || {};
-    set('tr-time', whenLabel() + ' 혼잡 예보');
     set('tr-k1', '혼잡 칸 (보통 이상)');
     set('tr-k2', '높음 · 매우높음');
     set('tr-top-k', '가장 혼잡한 칸');

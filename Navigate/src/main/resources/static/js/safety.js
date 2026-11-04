@@ -110,7 +110,6 @@ function renderSafetyPanel() {
   const set = (id, text) => { document.getElementById(id).textContent = text; };
   exposure = computeExposure();
 
-  set('sf-time', d.fcstDate ? `${d.fcstDate.slice(4, 6)}-${d.fcstDate.slice(6)} ${d.fcstTime.slice(0, 2)}시 예보 (3시간 단위)` : '사고위험 예보');
   set('sf-n-high', c['경계'] != null ? fmtN(c['경계']) + '칸' : '-');
   set('sf-n-mid', c['주의'] != null ? fmtN(c['주의']) + '칸' : '-');
 
