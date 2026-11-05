@@ -4,7 +4,7 @@
 /* 바람 화살표 (풍향에 맞춰 돌림) */
 .wind-arrow{
   display: inline-block;
-  font-weight: bold;
+  font-weight: 700;
   line-height: 1;
 }
 

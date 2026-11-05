@@ -56,19 +56,23 @@
     panel.id = 'wx-panel';
     panel.className = 'wx-panel wx-closed';
     panel.innerHTML = `
-      <button type="button" class="wx-tab" title="기상 패널 열기/닫기">
-        <span class="wx-tab-dot"></span><span class="wx-tab-text">기상</span><span class="wx-tab-arrow">▶</span>
+      <button type="button" class="wx-tab" title="기상 패널 열기/닫기" aria-label="기상 패널 열기/닫기" aria-expanded="false">
+        <span class="wx-tab-dot"></span><span class="wx-tab-text">기상</span><span class="wx-tab-arrow"></span>
       </button>
       <div class="wx-body">
         <div class="wx-head">
           <span class="wx-title">항구 기상</span>
           <span class="wx-time"></span>
-          <button type="button" class="wx-close" title="닫기">✕</button>
+          <button type="button" class="wx-close" title="닫기" aria-label="기상 패널 닫기"></button>
         </div>
         <div class="wx-summary"></div>
         <div class="wx-cards"></div>
+        <button type="button" class="wx-fc-open" data-wx-open-drawer>72시간 그래프 보기</button>
         <button type="button" class="cctv-open-btn">항만 영상</button>
-        <div class="wx-foot">위험: 파고 3m↑ · 풍속 14m/s↑ · 시정 1km↓<br>주의: 파고 2m↑ · 풍속 10m/s↑ · 시정 3km↓</div>
+        <div class="wx-foot">
+          <div><i class="wx-key danger"></i>위험 · 파고 3m↑ · 풍속 14m/s↑ · 시정 1km↓</div>
+          <div><i class="wx-key caution"></i>주의 · 파고 2m↑ · 풍속 10m/s↑ · 시정 3km↓</div>
+        </div>
       </div>`;
     document.body.appendChild(panel);
 
@@ -109,7 +113,7 @@
     const panel = document.getElementById('wx-panel');
     if (!panel) return;
     panel.classList.toggle('wx-closed', !open);
-    panel.querySelector('.wx-tab-arrow').textContent = open ? '◀' : '▶';
+    panel.querySelector('.wx-tab').setAttribute('aria-expanded', open);  // 화살표 방향은 CSS 가 이 값을 보고 바꿈
     placeDrawer();
   }
 
@@ -164,16 +168,12 @@
       <div class="wx-fc">
         <div class="wx-fc-title">향후 72시간 ${f && f.stale ? '<span class="wx-fc-stale">갱신 실패 · 이전 예보</span>' : ''}</div>
         ${body}
-        <button type="button" class="wx-fc-open" data-wx-open-drawer>그래프 크게 보기 ▲</button>
       </div>`;
   }
 
   function card(role, name) {
     const label = role === 'start' ? '출발' : '도착';
-    if (!name) {
-      return `<div class="wx-card wx-empty"><span class="wx-role">${label}</span>
-                지도에서 ${label === '출발' ? '출발지' : '도착지'}를 선택하세요</div>`;
-    }
+    if (!name) return '';  // 아직 고르지 않은 쪽은 안내 카드 없이 비워 둠
     const w = byName.get(norm(name));
     if (!w) {
       const msg = loadError ? '기상 데이터를 불러오지 못했습니다' : (refreshedAt ? '이 항구의 기상 정보가 없습니다' : '불러오는 중…');
@@ -243,8 +243,11 @@
     sumEl.textContent = s.text;
     sumEl.style.display = s.text ? '' : 'none';
     sumEl.style.setProperty('--lv', s.lv ? COLORS[s.lv] : '#888');
+    // 기상 패널은 항상 "지금" 기준 (위쪽 볼 시각을 바꿔도 안 바뀜) -> 그렇다고 글자로 알려 줌
     panel.querySelector('.wx-time').textContent =
-      refreshedAt && refreshedAt.length > 15 ? `${refreshedAt.slice(11, 16)} 갱신` : '';
+      refreshedAt && refreshedAt.length > 15 ? `현재 기준 · ${refreshedAt.slice(11, 16)} 갱신` : '현재 기준';
+    // 헤더 오른쪽에도 기상 자료 시각을 보여 줌
+    document.getElementById('hd-wx').textContent = refreshedAt && refreshedAt.length > 15 ? `기상 ${refreshedAt.slice(11, 16)} 갱신` : '';
     const dot = panel.querySelector('.wx-tab-dot');
     dot.style.background = s.lv ? COLORS[s.lv] : 'transparent';
     renderDrawer();
@@ -254,8 +257,8 @@
   // ---------- 아래에서 올라오는 72시간 그래프 바 ----------
   const DRAWER_H = 250;
   const SERIES = [
-    { role: 'start', label: '출발', color: '#1f6fd1', dash: '' },
-    { role: 'end', label: '도착', color: '#8a3ffc', dash: '6 4' },
+    { role: 'start', label: '출발', color: '#1d4ed8', dash: '' },       // 경로 파랑 (선택한 항구와 같은 색)
+    { role: 'end', label: '도착', color: '#374151', dash: '6 4' },     // 진한 회색 점선 (보라는 교통 전용 색이라 쓰지 않음)
   ];
   let drawerOpen = false;
   let drawerData = [];   // [{ label, color, dash, name, hours }]
@@ -267,13 +270,13 @@
     d.id = 'wx-drawer';
     d.className = 'wx-drawer';
     d.innerHTML = `
-      <button type="button" class="wx-drawer-handle">
-        <span class="wx-tab-dot"></span>향후 72시간 파고·풍속 <span class="wx-drawer-arrow">▲</span>
+      <button type="button" class="wx-drawer-handle" aria-expanded="false">
+        <span class="wx-tab-dot"></span>향후 72시간 파고·풍속 <span class="wx-drawer-arrow"></span>
       </button>
       <div class="wx-drawer-body">
         <div class="wx-drawer-head">
           <div class="wx-drawer-legend"></div>
-          <button type="button" class="wx-close" title="닫기">✕</button>
+          <button type="button" class="wx-close" title="닫기" aria-label="72시간 그래프 닫기"></button>
         </div>
         <div class="wx-drawer-charts">
           <div class="wx-chart" data-kind="wave"></div>
@@ -293,14 +296,17 @@
     drawerOpen = open;
     const d = ensureDrawer();
     d.classList.toggle('wx-drawer-open', open);
-    d.querySelector('.wx-drawer-arrow').textContent = open ? '▼' : '▲';
+    d.querySelector('.wx-drawer-handle').setAttribute('aria-expanded', open);
     place();
     if (open) renderDrawer();
   }
 
+  // 볼 시각이 바뀌면 열려 있는 그래프의 세로선도 옮김
+  document.addEventListener('when-changed', () => { if (drawerOpen) renderDrawer(); });
+
   /**
    * 위치:
-   * - 왼쪽: 사이드바 오른쪽 끝, 기상 패널이 펼쳐져 있으면 패널 오른쪽 끝
+   * - 왼쪽: 사이드바 오른쪽 끝 (기상 패널이 열리고 닫혀도 안 움직임)
    * - 오른쪽: 지도 영역 오른쪽 끝
    * - 아래: 화면(브라우저 창) 맨 아래
    */
@@ -310,14 +316,8 @@
     const mapDiv = document.querySelector('.map-div') || document.getElementById('map');
     if (!d || !mapDiv) return;
     const r = mapDiv.getBoundingClientRect();
-    let left = r.left;
-    const panel = document.getElementById('wx-panel');
-    if (panel && !panel.classList.contains('wx-closed')) {
-      const body = panel.querySelector('.wx-body');
-      if (body) left = Math.max(left, body.getBoundingClientRect().right);
-    }
-    const width = Math.max(r.right - left, 200);
-    d.style.left = `${Math.round(left)}px`;
+    const width = Math.max(r.width, 200);
+    d.style.left = `${Math.round(r.left)}px`;
     d.style.width = `${Math.round(width)}px`;
     d.style.bottom = '0px';
     const body = d.querySelector('.wx-drawer-body');
@@ -375,8 +375,8 @@
       g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" class="wx-grid-line${v === caution || v === danger ? ' wx-grid-th' : ''}"/>`;
       g += `<text x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end" class="wx-axis">${v}</text>`;
     });
-    g += `<text x="${W - pad.r}" y="${y(danger) - 4}" text-anchor="end" class="wx-th-label" fill="${COLORS['위험']}">위험 ${danger}${unit}</text>`;
-    g += `<text x="${W - pad.r}" y="${y(caution) - 4}" text-anchor="end" class="wx-th-label" fill="${COLORS['주의']}">주의 ${caution}${unit}</text>`;
+    g += `<text x="${W - pad.r}" y="${y(danger) - 4}" text-anchor="end" class="wx-th-label wx-th-danger">위험 ${danger}${unit}</text>`;
+    g += `<text x="${W - pad.r}" y="${y(caution) - 4}" text-anchor="end" class="wx-th-label wx-th-caution">주의 ${caution}${unit}</text>`;
     // x축: 6시간마다 시각, 자정마다 날짜
     hours.forEach((h, i) => {
       const hour = Number(h.time.slice(11, 13));
@@ -399,10 +399,17 @@
       });
       if (path) g += `<path d="${path}" fill="none" stroke="${d.color}" stroke-width="2.2" stroke-dasharray="${d.dash}" stroke-linejoin="round"/>`;
     });
+    // 위쪽 "볼 시각"(지금/내일 …)이 이 그래프의 어디인지 세로선으로 표시
+    const w = currentWhen();
+    const wi = hours.findIndex((h) => h.time.slice(0, 13) === `${w.date.slice(0, 4)}-${w.date.slice(4, 6)}-${w.date.slice(6)}T${w.hour}`);
+    if (wi >= 0) {
+      g += `<line x1="${x(wi)}" x2="${x(wi)}" y1="${pad.t}" y2="${H - pad.b}" class="wx-when-line"/>`;
+      g += `<text x="${x(wi)}" y="${pad.t - 5}" text-anchor="middle" class="wx-when-label">${whenLabel(w)}</text>`;
+    }
     g += `<line class="wx-cursor" x1="0" x2="0" y1="${pad.t}" y2="${H - pad.b}" style="display:none"/>`;
 
     el.innerHTML = `<div class="wx-chart-title">${kind === 'wave' ? '파고 (m)' : '풍속 (m/s)'}</div>
-      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${g}</svg>`;
+      <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${kind === 'wave' ? '파고' : '풍속'} 72시간 예보 그래프">${g}</svg>`;
     el.dataset.n = n;
     el.dataset.l = pad.l;
     el.dataset.r = pad.r;
