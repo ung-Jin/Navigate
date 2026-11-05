@@ -39,4 +39,20 @@
     </div>
   </section>
 
+  <!-- 사고 다발 (hotspot.js) — MTIS 연도별 자료, 체크한 것만 지도에 표시 (안전진단을 꺼도 따로 볼 수 있음) -->
+  <section class="hs-box" id="hotspot-panel">
+    <label class="hs-row" title="MTIS가 사고가 자주 난 곳으로 지정한 해양격자 (약 2.8km 칸)">
+      <input type="checkbox" id="hs-grid">
+      <i class="hs-sw hs-sw-grid"></i>사고다발 격자
+      <small id="hs-grid-n" class="muted"></small>
+    </label>
+    <label class="hs-row" title="최근 5년 좌초·좌주 사고가 모여 난 곳">
+      <input type="checkbox" id="hs-strand">
+      <i class="hs-sw hs-sw-strand"></i>좌초 다발지점
+      <small id="hs-strand-n" class="muted"></small>
+    </label>
+    <div id="hs-year" class="muted hs-year"></div>
+    <div id="hs-msg" class="msg"></div>
+  </section>
+
 </th:block>
