@@ -69,6 +69,11 @@ axios.get('/api/ports')
       // 이름표를 옆으로 민 만큼 연결선을 반대로 옮겨서 마커 가운데를 가리키게 함 (layout.css 의 --line-x)
       marker.getTooltip().getElement().style.setProperty('--line-x', -pos[1][0] + 'px');
       portMarkers.push({ name: p.name, marker: marker });
+
+      // 사이드의 출발지/도착지 입력 칸에서 쓸 항구 이름 후보 (side.html 의 #port-list)
+      const option = document.createElement('option');
+      option.value = p.name;
+      document.getElementById('port-list').appendChild(option);
     }
     refreshPortLabels();  // 이미 선택된 항구가 있으면 바로 표시
   });

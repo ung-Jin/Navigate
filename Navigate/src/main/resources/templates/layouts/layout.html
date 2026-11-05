@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>국내 해상교통 대시보드</title>
   <link rel="stylesheet" th:href="@{/css/layouts/layout.css}">
   <link rel="stylesheet" th:href="@{/css/traffic.css}">
   <link rel="stylesheet" th:href="@{/css/safety.css}">
@@ -44,8 +44,6 @@
   <script th:src="@{/js/hotspot.js}"></script>
   <!-- 경로찾기 (map.js 다음에 와야 함 — map 변수를 사용) -->
   <script th:src="@{/js/route.js}"></script>
-  <!-- [개발 확인용] 바다 격자 보기 — 완성되면 지워도 됨 -->
-  <script th:src="@{/js/route-grid.js}"></script>
 
   <!-- 실시간 항만 영상 (주소는 .env 의 CCTV_BASE — 깃에 올리지 않음) -->
   <script th:inline="javascript">const cctvBase = /*[[${@environment.getProperty('cctv.base')}]]*/ '';</script>

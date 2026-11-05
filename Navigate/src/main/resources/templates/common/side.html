@@ -3,26 +3,28 @@
 <th:block th:fragment="sideFragment">
 
   <div class="side-div">
-    <!-- 선택한 출발지 -> 도착지 (side.js가 채워줌) -->
-    <div id="route-text">출발지 선택 -> 도착지 선택</div>
-    <button id="find-route-btn" type="button" disabled>경로찾기</button>
-    <!-- 임시 버튼: 선택한 출발지/도착지 지우기 -->
-    <button id="reset-btn" type="button">선택초기화</button>
+    <!-- 볼 시각 (common/when.html) — 교통현황·안전진단 공통 -->
+    <div th:replace="~{common/when::whenFragment}"></div>
+
+    <!-- 출발지 / 도착지: 지도에서 눌러도 채워지고(side.js), 직접 쳐도 됨 (list = 아래 항구 이름 후보, map.js 가 채움) -->
+    <input id="start-input" type="text" placeholder="출발지 입력" list="port-list">
+    <input id="end-input" type="text" placeholder="도착지 입력" list="port-list">
+    <datalist id="port-list"></datalist>
+    <div class="route-btns">
+      <!-- 선택한 출발지/도착지 지우기 -->
+      <button id="reset-btn" type="button">다시입력</button>
+      <button id="find-route-btn" type="button">경로찾기</button>
+    </div>
 
     <!-- 경로 계산 결과 (route.js 가 채워줌) -->
     <div id="route-result"></div>
 
-    <!-- [개발 확인용] 바다 격자 보기 — 완성되면 이 줄과 route-grid.js 를 지우면 됨 -->
-    <div class="grid-check">
-      <label><input type="checkbox" id="grid-on"> 바다격자(확인용)</label>
-      <span id="grid-info"></span>
+    <!-- 교통현황 (common/traffic.html) · 안전진단 (common/safety.html) — 제목 버튼으로 켜고 끔 -->
+    <h4 class="side-title">해양 정보</h4>
+    <div class="panels">
+      <div th:replace="~{common/traffic::trafficFragment}"></div>
+      <div th:replace="~{common/safety::safetyFragment}"></div>
     </div>
-
-    <!-- 볼 시각 (common/when.html) — 교통현황·안전진단 공통 -->
-    <div th:replace="~{common/when::whenFragment}"></div>
-    <!-- 교통현황 (common/traffic.html) · 안전진단 (common/safety.html) — 제목의 체크박스로 골라 봄 -->
-    <div th:replace="~{common/traffic::trafficFragment}"></div>
-    <div th:replace="~{common/safety::safetyFragment}"></div>
   </div>
 
 </th:block>
