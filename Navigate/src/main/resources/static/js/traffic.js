@@ -240,10 +240,9 @@ function drawLegend() {
       + steps.map((s, i) => `<span class="chip"><i style="background:${s.color}"></i>${i === 0 ? '<1' : s.min + (i === steps.length - 1 ? '+' : '')}</span>`).join('')
       + '<span class="unit">%</span></span>';
   } else {
-    const base = minShips() > 1 ? `해역별 선박 수(${minShips()}척 이상 칸만)` : '해역별 선박 수';
     box.innerHTML = now
-      ? `<span class="unit">숫자 = ${base} · 진한 칸 = 상위 3곳 · 누르면 칸별로</span>`
-      : '<span class="unit">숫자 = 해역별 혼잡 칸 수(보통 이상) · 진한 칸 = 상위 3곳 · 누르면 칸별로</span>';
+      ? '<span class="unit">숫자 = 해역별 선박 수 · 진한 칸 = 상위 3곳</span>'
+      : '<span class="unit">숫자 = 해역별 혼잡 칸 수 · 진한 칸 = 상위 3곳</span>';
   }
 }
 
@@ -267,6 +266,7 @@ function renderTrafficPanel() {
   const set = (id, text) => { document.getElementById(id).textContent = text; };
   if (currentWhen().now) {
     const d = trafficData || {};
+    if (d.regDt) document.getElementById('hd-traffic').textContent = `교통 ${d.regDt.slice(11, 16)} 기준`;  // 헤더 오른쪽 데이터 시각
     set('tr-k1', '선박 수');
     set('tr-k2', '선박 있는 칸');
     set('tr-top-k', '가장 붐비는 칸');

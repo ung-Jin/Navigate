@@ -13,6 +13,15 @@
   --line-control: #c8ced6;     /* 버튼·입력 테두리 */
   --line-card: #e3e6ea;        /* 카드 테두리 */
   --surface-soft: #f6f8fb;     /* 연한 회색 바탕 */
+  --chart-navy: #1e3a8a;       /* 해도 남색 (항구 마커·헤더) */
+  --traffic-purple: #5b21b6;   /* 교통 = 보라 (traffic.js 의 SHIP_COLOR 와 같은 색) */
+  --risk-caution: #eab308;     /* 안전진단 보통 (safety.js 의 RISK_COLORS 와 같은 색) */
+  --risk-warning: #f97316;     /* 안전진단 주의 */
+  --risk-danger: #dc2626;      /* 안전진단 경계 */
+  --wx-caution: #ef8f00;       /* 기상 주의 (weather-panel.js 의 COLORS 와 같은 색) */
+  --wx-danger: #c62828;        /* 기상 위험 */
+  --side-pad: 16px;            /* 사이드 좌우 안쪽 여백 (사이드 안의 모든 묶음이 같은 값을 씀) */
+  --radius-ui: 4px;            /* 사이드 컨트롤(입력·버튼·탭)의 모서리: 작고 단정하게 */
 }
 html, body{
   height: 100%;
@@ -35,46 +44,64 @@ button{
 /* 헤더 높이·사이드 폭은 정수 px 로 맞춤
    -> 지도가 반 픽셀(예: 52.5px) 위치에서 시작하면 지도·마커가 전부 흐리게 그려짐 */
 .header-div{
-  height: 64px;
+  height: 48px;             /* 정수 px (지도가 흐려지지 않게) */
   flex-shrink: 0;
   display: flex;
   align-items: center;      /* 제목을 세로 가운데로 */
+  gap: 10px;
   padding: 0 16px;          /* 왼쪽 오른쪽 안쪽 여백 */
-  border-bottom: 1px solid var(--line);
+  background: var(--chart-navy);  /* 해도 남색: 항구 마커와 같은 색 */
+  color: #fff;
 }
 .header-div h3{
   margin: 0;
   font-size: 16px;
   font-weight: 700;
 }
+.header-anchor{
+  flex: none;
+}
+.header-sub{
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, .3);  /* 제목과 부제 사이 얇은 구분선 */
+  color: #dbeafe;
+  font-size: 14px;
+}
+.header-time{  /* 데이터 기준 시각: 오른쪽 끝 */
+  display: flex;
+  gap: 16px;
+  margin-left: auto;
+  color: #dbeafe;
+  font-size: 12px;
+}
 
 .side-div{
   width: round(15%, 1px);  /* 15% 를 1px 단위로 반올림 */
   overflow-x: hidden;
   overflow-y: auto;        /* 내용이 길면 사이드 안에서 스크롤 (화면이 낮아도 아래가 안 잘림) */
-  border-right: 1px solid black;
+  border-right: 1px solid var(--line);
 }
 
 /* 출발지·도착지 입력 칸: 두 칸이 하나의 둥근 박스처럼 보임 (사이에 얇은 선 하나) */
 #start-input,
 #end-input{
   display: block;
-  width: calc(100% - 16px);  /* 좌우 8px 여백 (다른 패널 글자와 줄 맞춤) */
-  margin: 0 8px;
-  padding: 8px;
+  width: calc(100% - 2 * var(--side-pad));  /* 좌우 여백은 사이드 공통 값 */
+  margin: 0 var(--side-pad);
+  padding: 13px 14px;  /* 칸 하나 높이 약 46px: 키워서 사이드의 주인공으로 */
   border: 1px solid var(--line-control);
   background: #fff;
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   text-align: center;
 }
 #start-input{
-  margin-top: 20px;  /* 볼 시각 묶음과 경로 묶음 사이를 넓게 */
+  margin-top: 24px;  /* 볼 시각 묶음과 경로 묶음 사이를 넓게 */
   border-bottom: none;  /* 가운데 선은 도착지 칸의 위쪽 테두리가 맡음 */
-  border-radius: 6px 6px 0 0;
+  border-radius: var(--radius-ui) var(--radius-ui) 0 0;
 }
 #end-input{
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 var(--radius-ui) var(--radius-ui);
 }
 /* 글자를 치는 중인 칸은 테두리가 파랗게 */
 #start-input:focus,
@@ -87,32 +114,32 @@ button{
 .route-btns{
   display: flex;
   justify-content: space-between;
-  margin: 8px;
+  margin: 12px var(--side-pad) 0;
 }
 #find-route-btn,
 #reset-btn{
-  border-radius: 6px;
+  border-radius: var(--radius-ui);
   white-space: nowrap;  /* 사이드가 좁아도 버튼 글자가 두 줄로 꺾이지 않게 */
   cursor: pointer;
 }
 #find-route-btn{
-  height: 34px;  /* 두 버튼 높이는 같게 */
-  padding: 0 12px;
+  height: 40px;  /* 두 버튼 높이는 같게 */
+  padding: 0 18px;
   border: 1px solid var(--route-blue);
   background: #fff;
   color: var(--route-blue);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 #find-route-btn:hover{
   background: var(--blue-tint);
 }
 #reset-btn{
-  height: 34px;  /* 두 버튼 높이는 같게 (작은 건 폭·글자만) */
-  padding: 0 8px;
+  height: 40px;  /* 두 버튼 높이는 같게 (작은 건 폭·글자만) */
+  padding: 0 14px;
   border: 1px solid var(--line-control);
   background: #fff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 400;
 }
 #reset-btn:hover{
@@ -124,6 +151,11 @@ button{
 
 #map{
   height: 100%;
+}
+
+/* 지도 바탕 타일의 채도를 낮춰 육지·도로가 덜 튀게 (경로·교통·위험 색이 주인공이 되도록) */
+.leaflet-tile-pane{
+  filter: saturate(.8) brightness(1.03);
 }
 
 /* leaflet.css 가 이 파일보다 나중에 불러와져서, 같은 우선순위면 Leaflet 기본값이 이김
@@ -148,31 +180,46 @@ button{
 /* 지도 위 모든 툴팁 글자 (항구 이름표 + 교통·안전진단 정보 창) */
 .leaflet-tooltip{
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 
 /* 사이드 묶음의 소제목: 굵은 글자 + 아래 얇은 선 (묶음 사이를 24px 띄움) */
 .side-title{
-  margin: 24px 8px 0;
-  padding-bottom: 8px;
+  margin: 24px var(--side-pad) 0;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
 }
 
 /* 경로찾기 결과 (route.js 가 채움) */
 #route-result{
-  margin: 6px 8px;  /* 왼쪽 8px: 입력 칸·패널 글자와 시작 줄을 맞춤 */
-  font-size: 12px;
+  margin: 16px var(--side-pad) 0;  /* 좌우는 입력 칸·패널 글자와 같은 여백 */
+  font-size: 14px;
 }
 .route-row{
   display: flex;
   justify-content: space-between;
-  padding: 3px 0;
+  padding: 2px 0;
 }
 .route-label{
-  font-weight: bold;
+  font-weight: 700;
+}
+/* 경로 이름 앞에 지도에 그려진 선 모양 (최소경로 = 점선, 안전경로 = 실선): 결과와 지도를 눈으로 잇는다 */
+.route-label::before{
+  content: '';
+  display: inline-block;
+  width: 16px;
+  margin-right: 6px;
+  border-top: 3px solid currentColor;
+  vertical-align: middle;
+}
+#route-result > .route-row:first-child .route-label::before{
+  border-top-style: dashed;
+}
+.route-note summary{
+  cursor: pointer;
 }
 /* 안전경로(두 번째 줄 = .route-sub 바로 다음 .route-row)가 결과의 주인공: 거리·시간을 크고 굵게 */
 .route-sub + .route-row{
@@ -193,14 +240,14 @@ button{
 /* 경로별 위험 지표 */
 .route-sub{
   color: var(--ink-soft);
-  font-size: 12px;
-  padding: 0 0 4px 0;
-}
-/* 두 경로 비교 (거리 +N% · 위험 -M%): 가장 중요한 결과 */
-.route-diff{
   font-size: 14px;
-  font-weight: bold;
-  padding: 6px 0 4px;
+  padding: 0 0 6px 0;
+}
+/* 두 경로 비교 (위험 -M% · 거리 +N%): 가장 중요한 결과 */
+.route-diff{
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 0 6px;
   border-top: 1px solid var(--line);
 }
 

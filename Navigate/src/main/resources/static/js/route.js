@@ -10,6 +10,10 @@
 // 경로 선을 담아 둘 레이어. 새로 계산할 때마다 이 레이어만 비우면 이전 선이 지워진다.
 const routeLayer = L.layerGroup().addTo(map);
 
+// 경로선은 교통 칸(400)·위험 칸(420) 위, 해역 이름표(450)·항구 마커(600) 아래에 그린다.
+// (안 그러면 위험 칸 아래로 선이 묻힘)
+map.createPane('routePane').style.zIndex = 440;
+
 // 선 색깔
 const ROUTE_COLOR_SHORTEST = '#6b7280';  // 회색 — 최소경로
 const ROUTE_COLOR_SAFE = '#2563eb';      // 파랑 — 안전경로
@@ -47,9 +51,16 @@ function requestRoute(start, end) {
 // 받은 경로 데이터를 지도에 그린다.
 function drawRoute(data) {
 
+  // ---------- 0. 흰 테두리 ----------
+  // 두 경로 아래에 굵은 흰 선을 먼저 깔아서, 교통·위험 칸 색 위에서도 경로선이 또렷이 구분되게 한다.
+  for (const path of [data.shortest, data.safe]) {
+    L.polyline(path.coords, { pane: 'routePane', color: '#fff', weight: 8, opacity: 0.85, interactive: false }).addTo(routeLayer);
+  }
+
   // ---------- 1. 최소경로 (회색 점선) ----------
   // coords 는 [[위도, 경도], [위도, 경도], ...] 모양이라 Leaflet 에 그대로 넣을 수 있다.
   L.polyline(data.shortest.coords, {
+    pane: 'routePane',
     color: ROUTE_COLOR_SHORTEST,
     weight: 4,
     dashArray: '8 6'   // 점선으로 (숫자는 '선 길이 빈칸 길이')
@@ -59,6 +70,7 @@ function drawRoute(data) {
   // 지금은 최소경로와 좌표가 같아서 선이 겹쳐 보인다.
   // 날씨·교통·사고위험을 반영하면 위험한 곳을 돌아가는 다른 길로 갈라진다.
   L.polyline(data.safe.coords, {
+    pane: 'routePane',
     color: ROUTE_COLOR_SAFE,
     weight: 4
   }).addTo(routeLayer);
@@ -87,15 +99,17 @@ function showRouteResult(data) {
     html += '<div class="route-note">두 경로가 같습니다 — 우회할 위험 구간이 없습니다</div>';
   } else {
     const km = data.kmPct, ex = data.exposurePct;
+    // 이 제품의 핵심은 위험이 얼마나 줄었는가: 위험을 앞에 둔다
     html += '<div class="route-diff">' +
-      '거리 ' + (km > 0 ? '+' : '') + km + '% · ' +
-      '위험 ' + (ex > 0 ? '+' : '') + ex + '%' +
+      '위험 ' + (ex > 0 ? '+' : '') + ex + '% · ' +
+      '거리 ' + (km > 0 ? '+' : '') + km + '%' +
     '</div>';
   }
 
   // 어떤 자료로 위험도를 매겼는지
   if (data.sources && data.sources.length) {
-    html += '<div class="route-note">' + data.sources.join('<br>') + '</div>';
+    // 자세한 자료 시각은 눌러야 보이게 접어 둔다 (원시 시각 글자가 결과를 덮지 않게)
+    html += '<details class="route-note"><summary>경로 계산에 쓴 자료</summary>' + data.sources.join('<br>') + '</details>';
   }
 
   box.innerHTML = html;

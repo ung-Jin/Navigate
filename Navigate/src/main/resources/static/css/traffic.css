@@ -3,16 +3,16 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   column-gap: 8px;
-  padding: 12px 8px 8px;  /* 위 12px: 소제목 선(.side-title)과 토글 버튼 사이 */
-  font-size: 13px;
+  padding: 16px var(--side-pad) 8px;  /* 위: 소제목 선과 토글 버튼 사이, 아래: 사이드 맨 아래 여유 */
+  font-size: 14px;
 }
 .panel{
   display: contents;  /* 패널 상자는 없애고, 안의 제목(.panel-head)·내용(.panel-body)이 격자 칸이 되게 함 */
 }
 #traffic-panel .panel-head{ grid-column: 1; grid-row: 1; }
 #safety-panel .panel-head{ grid-column: 2; grid-row: 1; }
-#traffic-panel .panel-body{ grid-column: 1 / -1; grid-row: 2; margin-top: 8px; }
-#safety-panel .panel-body{ grid-column: 1 / -1; grid-row: 3; margin-top: 8px; }
+#traffic-panel .panel-body{ grid-column: 1 / -1; grid-row: 2; margin-top: 10px; }
+#safety-panel .panel-body{ grid-column: 1 / -1; grid-row: 3; margin-top: 14px; }  /* 두 레이어 사이는 넓게 */
 .panel-head{
   display: flex;  /* 아래 여백은 두지 않음: 켜진 쪽만 여백이 생기면 반대쪽 버튼이 같이 커짐 (여백은 위의 .panel-body 가 가짐) */
 }
@@ -23,12 +23,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 12px;
+  padding: 10px 12px;
   border: 1px solid var(--line-control);
-  border-radius: 6px;
+  border-radius: var(--radius-ui);
   background: #fff;
-  font-size: 14px;
-  font-weight: bold;
+  font-size: 15px;
+  font-weight: 700;
   white-space: nowrap;   /* 사이드바가 좁아도 제목이 두 줄로 꺾이지 않게 */
   cursor: pointer;
 }
@@ -53,29 +53,29 @@
 }
 .muted{
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 /* 볼 시각 (교통현황·안전진단 공통): 지금 / 오늘·내일·모레 + 시각 */
 .when-bar{
   display: flex;
-  gap: 4px;
-  padding: 10px 8px;
+  gap: 8px;
+  padding: 16px var(--side-pad);  /* 사이드 맨 위 박스를 키움: 위아래 16px, 좌우는 사이드 공통 여백 */
   border-bottom: 1px solid var(--line);  /* 사이드 맨 위에 있으므로 아래쪽 선 (위쪽은 헤더 선이 있음) */
-  font-size: 13px;
+  font-size: 14px;
 }
 .when-bar .seg{
   flex: 1;
   margin-bottom: 0;
 }
 .when-bar .seg span{
-  padding: 5px 0;
+  padding: 10px 0;  /* 칸 높이 약 40px (입력 박스·버튼과 같은 눈높이) */
 }
 .when-bar select{
   font: inherit;
-  padding: 0 2px;
+  padding: 0 8px;
   border: 1px solid var(--line-control);
-  border-radius: 6px;
+  border-radius: var(--radius-ui);
 }
 .when-bar select:disabled{
   color: var(--muted);
@@ -85,17 +85,25 @@
 .seg{
   display: flex;
   border: 1px solid var(--line-control);
-  border-radius: 6px;
+  border-radius: var(--radius-ui);
   overflow: hidden;
   margin-bottom: 6px;
 }
 .seg label{
+  position: relative;
   flex: 1;
   text-align: center;
   cursor: pointer;
 }
-.seg input{
-  display: none;
+.seg input{  /* 안 보이게만 하고 키보드로는 이동 가능하게 (display: none 이면 키보드로 못 감) */
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+.seg label:has(input:focus-visible) span{  /* 키보드로 이동했을 때 */
+  outline: 2px solid var(--route-blue);
+  outline-offset: -2px;
 }
 .seg span{
   display: block;
@@ -106,46 +114,97 @@
   color: #fff;
 }
 
-/* 숫자 요약 */
+/* 숫자 요약: 작은 카드 여러 개 대신 "라벨 ··· 값" 한 줄 목록 (큰 숫자 카드는 어느 대시보드에나 있는 모양) */
 .kpis{
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
 }
 .kpi{
   display: flex;
-  flex-direction: column;
-  padding: 4px 6px;
-  border: 1px solid var(--line-card);
-  border-radius: 6px;
-  background: #fff;
+  flex-wrap: wrap;                 /* 아래 보조 설명(small)은 다음 줄로 */
+  align-items: baseline;
+  justify-content: space-between;  /* 라벨은 왼쪽, 값은 오른쪽 */
+  gap: 0 8px;
+  padding: 5px 0;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: none;
+  color: inherit;
   font: inherit;
   text-align: left;
 }
 .kpi .k{
   color: var(--muted);
-  font-size: 11px;
+  font-size: 14px;
 }
 .kpi b{
-  font-size: 16px;
+  font-size: 14px;
 }
-.kpi.wide{
-  grid-column: span 2;
+.kpi.lead b{
+  font-size: 18px;   /* 레이어마다 대표 지표 하나만 크게 */
+}
+.kpi small{
+  flex-basis: 100%;
 }
 button.kpi{
-  cursor: pointer;   /* 누르면 이동하는 카드만 */
+  width: 100%;
+  cursor: pointer;   /* 누르면 이동하는 줄만 */
 }
 button.kpi:hover{
-  border-color: var(--route-blue);
+  background: var(--surface-soft);
+}
+/* 눌러서 이동하는 줄: 라벨 뒤에 작은 화살표 (글자 기호 대신 CSS 로 그림) */
+button.kpi .k::after{
+  content: '';
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 6px;
+  border-top: 1.5px solid currentColor;
+  border-right: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+/* 경계·주의 줄: 지도의 위험 칸과 같은 색 사각형 */
+#safety-panel .kpi:nth-child(1) .k::before,
+#safety-panel .kpi:nth-child(2) .k::before{
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 2px;
+}
+#safety-panel .kpi:nth-child(1) .k::before{ background: var(--risk-danger); }
+#safety-panel .kpi:nth-child(2) .k::before{ background: var(--risk-warning); }
+
+/* 레이어 소제목: 어느 숫자가 어느 레이어 것인지 + 지도 칸과 같은 색 표시 */
+.layer-title{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.layer-key{
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.layer-key.traffic{ background: var(--traffic-purple); }
+.layer-key.safety{  /* 보통·주의·경계 3색 */
+  width: 18px;
+  background: linear-gradient(90deg, var(--risk-caution) 33.3%, var(--risk-warning) 33.3% 66.6%, var(--risk-danger) 66.6%);
 }
 
 /* 표시 기준 척수 (가로 막대) */
 .tr-filter{
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  font-size: 11px;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
 }
 .tr-filter .k{
   color: var(--muted);
@@ -159,7 +218,7 @@ button.kpi:hover{
 }
 .tr-filter output{
   white-space: nowrap;
-  font-weight: bold;
+  font-weight: 700;
 }
 .tr-filter input:disabled + output{
   color: var(--muted);
@@ -173,7 +232,7 @@ button.kpi:hover{
   align-items: center;
   gap: 2px 6px;
   margin-top: 6px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .legend .chip{
   display: inline-flex;
@@ -220,7 +279,7 @@ button.kpi:hover{
   font-size: 14px;
 }
 .tr-zone span{
-  font-size: 11px;
+  font-size: 12px;
 }
 .tr-zone.top{
   background: #4c1d95;
@@ -237,8 +296,8 @@ button.kpi:hover{
 .tr-cell-num span{
   display: block;
   transform: translate(-50%, -50%);
-  font-size: 11px;
-  font-weight: bold;
+  font-size: 12px;
+  font-weight: 700;
   color: #4c1d95;
   text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
   white-space: nowrap;
@@ -252,7 +311,7 @@ button.kpi:hover{
 /* 수집 실패 등 안내 */
 .msg{
   color: #b42318;
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 4px;
 }
 .msg:empty{
