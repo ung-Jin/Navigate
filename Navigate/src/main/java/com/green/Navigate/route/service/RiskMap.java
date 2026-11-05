@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 // 칸마다 위험 점수(0~1)를 매긴다.
@@ -91,10 +92,47 @@ public class RiskMap {
   }
 
 
+  // 한 번 조립한 위험도 지도를 담아 두는 곳.
+  //
+  // 예보 원본은 팀원 서비스가 이미 저장해 두지만, 그것을 칸별 점수로 합치는 일(수천 칸을 돌며
+  // 더하고, 사고위험 예보의 큰 칸을 잘게 칠하는 것)은 매번 다시 하고 있었다.
+  // 같은 시각이면 어느 경로를 찾든 위험도 지도는 똑같으므로 담아 두고 다시 쓴다.
+  private final Map<String, Snapshot> cache = new ConcurrentHashMap<>();
+
+  // '지금' 기준 지도를 만든 시각 (실시간 교통이 10분마다 갱신되므로 오래 쓰면 안 된다)
+  private volatile long nowBuiltAt = 0;
+
+  // '지금' 기준 지도를 다시 만들 간격 (분)
+  private static final long NOW_CACHE_MINUTES = 3;
+
+
   // date = yyyyMMdd, time = HH (둘 다 null 이면 지금)
   public Snapshot load(String date, String time) {
 
     boolean now = date == null || time == null;
+
+    // 담아 둔 것이 있으면 그대로 쓴다.
+    // '지금' 은 실시간 교통이 계속 바뀌므로 몇 분만 쓰고 버린다.
+    String key = now ? "now" : date + "_" + time;
+    Snapshot kept = cache.get(key);
+    if (kept != null) {
+      boolean stale = now && System.currentTimeMillis() - nowBuiltAt > NOW_CACHE_MINUTES * 60_000;
+      if (!stale) {
+        return kept;
+      }
+    }
+
+    Snapshot built = build(date, time, now);
+    cache.put(key, built);
+    if (now) {
+      nowBuiltAt = System.currentTimeMillis();
+    }
+    return built;
+  }
+
+
+  private Snapshot build(String date, String time, boolean now) {
+
     String d = now ? today() : date;
     String t = now ? String.format("%02d", java.time.LocalDateTime.now().getHour()) : time;
 

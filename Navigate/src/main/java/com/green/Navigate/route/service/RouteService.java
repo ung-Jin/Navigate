@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 // 경로 계산 담당
@@ -51,6 +53,17 @@ public class RouteService {
 
   // 위험 노출량을 잴 때 경로를 몇 km 간격으로 짚어 볼지
   private static final double SAMPLE_KM = 0.5;
+
+  // 최소경로를 담아 두는 곳 (출발 칸·도착 칸 -> 바닷길)
+  //
+  // 최소경로는 거리만 보고 찾으므로 시각과 아무 상관이 없다.
+  // 부산항→인천항의 최소경로는 지금이든 내일 06시든 똑같다.
+  // 그런데 시각을 바꿀 때마다 A* 를 두 번 다 돌리면 절반이 헛일이 된다.
+  //
+  // 항구가 31곳뿐이라 경우의 수가 많지 않지만, 지도에서 아무 데나 고를 수 있게 되면
+  // 늘어날 수 있으므로 상한을 두고 넘으면 통째로 비운다.
+  private static final int PATH_CACHE_MAX = 2000;
+  private final Map<String, List<double[]>> shortestCache = new ConcurrentHashMap<>();
 
 
   // 출발 항구 이름, 도착 항구 이름을 받아서 경로를 만들어 돌려준다.
@@ -112,7 +125,7 @@ public class RouteService {
     // 같은 A* 를 alpha 만 바꿔 두 번 돌린다.
     //   alpha = 0     -> 위험 무시, 거리만  = 최소경로
     //   alpha = ALPHA -> 위험한 곳을 돌아감 = 안전경로
-    List<double[]> shortPath = aStar.find(startCell, goalCell);
+    List<double[]> shortPath = findShortestCached(startCell, goalCell);
     if (shortPath == null) {
       result.setError("두 항구를 잇는 바닷길을 찾지 못했습니다");
       return result;
@@ -121,6 +134,13 @@ public class RouteService {
 
     RoutePathDTO shortest = makePath(from, to, shortPath, risk);
     RoutePathDTO safe = safePath == null ? shortest : makePath(from, to, safePath, risk);
+
+    // A* 는 격자 위의 경로를 가장 짧게 찾지만, 화면에 보여주는 것은 그 경로를 직선으로 편 뒤다.
+    // 8방향으로만 움직이는 격자의 한계 때문에, 펴고 나면 순서가 뒤집히는 경우가 드물게 있다
+    // (먼 바다를 지나는 경로가 훨씬 잘 펴진다). 그럴 때 더 긴 쪽을 '최소경로'라 부를 수는 없다.
+    if (safe.getKm() < shortest.getKm()) {
+      shortest = safe;
+    }
 
     // 돌아갔는데 더 안전하지 않다면 최소경로가 곧 안전경로다
     if (safe.getExposure() >= shortest.getExposure()) {
@@ -146,6 +166,29 @@ public class RouteService {
         System.currentTimeMillis() - startedAt);
 
     return result;
+  }
+
+
+  // 최소경로를 찾되, 한 번 찾은 것은 담아 두고 다시 쓴다.
+  //
+  // 시각을 바꿔 가며 볼 때 이 부분이 매번 다시 계산되는 것을 막는다 (계산 시간의 절반쯤).
+  private List<double[]> findShortestCached(int[] startCell, int[] goalCell) {
+
+    String key = startCell[0] + "," + startCell[1] + "-" + goalCell[0] + "," + goalCell[1];
+
+    List<double[]> cached = shortestCache.get(key);
+    if (cached != null) {
+      return cached;
+    }
+
+    List<double[]> path = aStar.find(startCell, goalCell);
+    if (path != null) {
+      if (shortestCache.size() >= PATH_CACHE_MAX) {
+        shortestCache.clear();
+      }
+      shortestCache.put(key, path);
+    }
+    return path;
   }
 
 
