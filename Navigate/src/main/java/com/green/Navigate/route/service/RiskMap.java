@@ -42,10 +42,25 @@ public class RiskMap {
   private final RiskForecastService riskForecastService;
 
   // ---------- 가중치 ----------
-  // 지금은 상식으로 정한 임시값이다. 사고 데이터로 학습해 뽑은 값으로 바꿀 예정.
-  private static final double W_TRAFFIC = 0.35;    // 교통 혼잡
-  private static final double W_FORECAST = 0.35;   // 사고위험 예보
-  private static final double W_WEATHER = 0.30;    // 파고·풍속
+  //
+  // 처음에는 상식으로 35/35/30 으로 잡았다가, MTIS 사고다발 격자(#243)를 정답지로 삼아 조정했다.
+  // 검증 방법과 재현은 tools/weight_check.py 참고.
+  //
+  //   전체 3,401칸을 위험도 순으로 줄 세우고, 사고다발 26칸이 몇 등인지 쟀다.
+  //   (사고다발을 계산에 넣고 채점하면 순환 논리가 되므로 정답지로만 썼다)
+  //
+  //     35/35/30  중앙 440등 (상위 13%) · AUC 0.798
+  //     50/30/20  중앙 172등 (상위  5%) · AUC 0.856   <- 지금
+  //
+  //   교통 비중을 올릴수록 사고다발 칸이 앞으로 왔다. 사고다발 지점은 "배는 몰리는데
+  //   예보 등급은 낮은 곳"이 많았기 때문이다 (사고 유형 1위가 충돌인 것과도 맞는다).
+  //   다만 교통만 쓰면 AUC 0.649 로 떨어진다 — 교통이 높은 일반 칸까지 올라와 묻힌다.
+  //
+  // 기상 0.20 은 검증하지 못한 값이다. 측정한 날 바다가 잔잔해(최대 파고 1.05m)
+  // 기상 점수가 0 이 아닌 칸이 6,497개 중 2개뿐이었다. 날씨가 나쁜 날 다시 재야 한다.
+  private static final double W_TRAFFIC = 0.50;    // 교통 혼잡
+  private static final double W_FORECAST = 0.30;   // 사고위험 예보
+  private static final double W_WEATHER = 0.20;    // 파고·풍속
 
   // ---------- 화물선·유조선 기상 한계 ----------
   // 팀원이 PortWeather.level() 에 쓴 기준(파고 3m·풍속 14m/s)은 여객선 통제 기준이다.
