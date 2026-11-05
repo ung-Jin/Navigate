@@ -19,3 +19,89 @@
 .leaflet-safetyRisk-pane path.leaflet-interactive{
   pointer-events: visiblePainted;
 }
+
+/* 사고 다발 체크박스 (안전진단 아래) — 사고다발 격자 · 좌초 다발지점 */
+.hs-box{
+  padding: 4px 8px 8px;
+  font-size: 13px;
+}
+.hs-row{
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+.hs-row small{
+  margin-left: auto;
+}
+.hs-year{
+  margin-top: 4px;
+}
+.hs-year:empty{
+  display: none;
+}
+/* 범례 견본: 격자 = 검은 삼각형, 좌초 = 갈색 마름모 (hotspot.js 와 같은 모양) */
+.hs-sw{
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+.hs-sw-grid{
+  background: #111827;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.hs-sw-strand{
+  width: 7px;
+  height: 7px;
+  margin: 0 1.5px;
+  transform: rotate(45deg);
+  background: #92400e;
+}
+
+/* 지도 표지 — 사고다발 격자 ▲숫자 · 좌초 다발지점 ◆ (가운데가 그 위치에 오게) */
+.hs-icon-wrap{
+  background: none;
+  border: none;
+}
+/* 사고다발 격자 표지 "▲사고 척수" — 항구 이름표 배지와 같은 모양, 사고 40척 이상은 한 단계 크게 */
+.hs-gbadge{
+  transform: translate(-50%, -50%);
+  padding: 1px 5px;
+  border: 1.5px solid #fff;
+  border-radius: 9px;
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 15px;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.hs-gbadge.big{
+  padding: 2px 6px;
+  font-size: 13px;
+}
+.hs-dia{
+  width: 8px;
+  height: 8px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1.5px solid #fff;
+  background: #92400e;
+  box-shadow: 0 0 0 1px #92400e;
+}
+
+/* 항구 이름표 배지 — 항구 5km 안 사고다발 격자의 사고 척수 합계 (축소 화면) */
+.hs-pbadge{
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  line-height: 15px;
+  vertical-align: 1px;
+}
