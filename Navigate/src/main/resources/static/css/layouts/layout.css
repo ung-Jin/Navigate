@@ -80,6 +80,15 @@ body{
   color: #888;
   padding: 3px 0;
 }
+/* 어느 시각 기준으로 계산한 경로인지 */
+.route-when{
+  font-size: 11px;
+  color: #555;
+  background: #f0f0f0;
+  padding: 2px 5px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
 /* 경로별 위험 지표 */
 .route-sub{
   color: #666;
