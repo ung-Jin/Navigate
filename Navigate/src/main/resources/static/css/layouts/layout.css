@@ -237,6 +237,15 @@ button{
   color: var(--muted);
   padding: 6px 0 3px;  /* 위쪽 6px: 결과와 출처 안내를 떼어 놓음 */
 }
+/* 어느 시각 기준으로 계산한 경로인지 */
+.route-when{
+  font-size: 11px;
+  color: #555;
+  background: #f0f0f0;
+  padding: 2px 5px;
+  margin-bottom: 4px;
+  display: inline-block;
+}
 /* 경로별 위험 지표 */
 .route-sub{
   color: var(--ink-soft);
