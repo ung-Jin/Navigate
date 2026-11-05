@@ -20,9 +20,13 @@
   pointer-events: visiblePainted;
 }
 
-/* 사고 다발 체크박스 (안전진단 아래) — 사고다발 격자 · 좌초 다발지점 */
+/* 사고 다발 체크박스 (안전진단 아래) — 사고다발 격자 · 좌초 다발지점
+   .panels 격자(traffic.css)에서 1줄 = 두 제목 버튼, 2·3줄 = 교통현황·안전진단 내용 → 그 아래 4줄을 전체 폭으로 씀 */
 .hs-box{
-  padding: 4px 8px 8px;
+  grid-column: 1 / -1;
+  grid-row: 4;
+  min-width: 0;
+  margin-top: 8px;
   font-size: 13px;
 }
 .hs-row{
