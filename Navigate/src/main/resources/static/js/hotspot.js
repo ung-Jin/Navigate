@@ -103,7 +103,6 @@ function renderHotspotPanel() {
   const ok = d.year && !d.error;
   document.getElementById('hs-grid-n').textContent = ok ? `${(d.grids || []).length}칸` : '';
   document.getElementById('hs-strand-n').textContent = ok ? `${(d.stranding || []).length}곳` : '';
-  document.getElementById('hs-year').textContent = ok ? `MTIS ${d.year}년 자료 · ▲숫자 = 사고 척수, 항구 근처는 이름표에 합계` : '';
   document.getElementById('hs-msg').textContent = d.error ?? '';
 }
 

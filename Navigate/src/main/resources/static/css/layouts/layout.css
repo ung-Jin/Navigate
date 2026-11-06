@@ -20,7 +20,7 @@
   --risk-danger: #dc2626;      /* 안전진단 경계 */
   --wx-caution: #ef8f00;       /* 기상 주의 (weather-panel.js 의 COLORS 와 같은 색) */
   --wx-danger: #c62828;        /* 기상 위험 */
-  --side-pad: 16px;            /* 사이드 좌우 안쪽 여백 (사이드 안의 모든 묶음이 같은 값을 씀) */
+  --side-pad: 20px;            /* 사이드 좌우 안쪽 여백 (사이드 안의 모든 묶음이 같은 값을 씀) */
   --radius-ui: 4px;            /* 사이드 컨트롤(입력·버튼·탭)의 모서리: 작고 단정하게 */
 }
 html, body{
@@ -76,9 +76,10 @@ button{
 }
 
 .side-div{
-  width: round(15%, 1px);  /* 15% 를 1px 단위로 반올림 */
+  width: round(18%, 1px);  /* 18% 를 1px 단위로 반올림 (네이버·카카오 지도 패널보다 약간 좁게) */
   overflow-x: hidden;
   overflow-y: auto;        /* 내용이 길면 사이드 안에서 스크롤 (화면이 낮아도 아래가 안 잘림) */
+  scrollbar-width: none;    /* 스크롤바는 숨김 (마우스 휠로는 그대로 스크롤): 자리를 안 차지해서 내용이 안 밀리고 좌우 여백이 같음 */
   border-right: 1px solid var(--line);
 }
 
@@ -96,7 +97,7 @@ button{
   text-align: center;
 }
 #start-input{
-  margin-top: 24px;  /* 볼 시각 묶음과 경로 묶음 사이를 넓게 */
+  margin-top: 28px;  /* 볼 시각 묶음과 경로 묶음 사이를 넓게 */
   border-bottom: none;  /* 가운데 선은 도착지 칸의 위쪽 테두리가 맡음 */
   border-radius: var(--radius-ui) var(--radius-ui) 0 0;
 }
@@ -114,7 +115,7 @@ button{
 .route-btns{
   display: flex;
   justify-content: space-between;
-  margin: 12px var(--side-pad) 0;
+  margin: 16px var(--side-pad) 0;
 }
 #find-route-btn,
 #reset-btn{
@@ -186,7 +187,7 @@ button{
 
 /* 사이드 묶음의 소제목: 굵은 글자 + 아래 얇은 선 (묶음 사이를 24px 띄움) */
 .side-title{
-  margin: 24px var(--side-pad) 0;
+  margin: 28px var(--side-pad) 0;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
   font-size: 15px;
@@ -195,13 +196,8 @@ button{
 
 /* 경로찾기 결과 (route.js 가 채움) */
 #route-result{
-  margin: 16px var(--side-pad) 0;  /* 좌우는 입력 칸·패널 글자와 같은 여백 */
+  margin: 20px var(--side-pad) 0;  /* 좌우는 입력 칸·패널 글자와 같은 여백 */
   font-size: 14px;
-}
-.route-row{
-  display: flex;
-  justify-content: space-between;
-  padding: 2px 0;
 }
 .route-label{
   font-weight: 700;
@@ -215,49 +211,61 @@ button{
   border-top: 3px solid currentColor;
   vertical-align: middle;
 }
-#route-result > .route-row:first-child .route-label::before{
+.route-label.shortest::before{
   border-top-style: dashed;
 }
 .route-note summary{
   cursor: pointer;
 }
-/* 안전경로(두 번째 줄 = .route-sub 바로 다음 .route-row)가 결과의 주인공: 거리·시간을 크고 굵게 */
-.route-sub + .route-row{
-  flex-wrap: wrap;           /* 사이드가 좁으면 줄을 바꿔서 넘치지 않게 */
-  align-items: baseline;
-  margin-top: 6px;           /* 최소경로 묶음과 안전경로 묶음 사이를 선 + 여백으로 구분 */
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
+/* 두 경로 비교표: 상자·색 바탕 없이 가는 선과 열 맞춘 숫자만 (두 경로가 같은 폭·같은 크기라 똑같이 잘 보임) */
+.route-table{
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
 }
-.route-sub + .route-row span:last-child{
-  font-size: 16px;
-  font-weight: 700;
+.route-table th,
+.route-table td{
+  padding: 7px 0;
+  border-top: 1px solid var(--line);
+  text-align: right;
+}
+.route-table thead th{
+  padding-top: 0;
+  padding-bottom: 8px;
+  border-top: none;
+}
+.route-table tbody th{  /* 항목 이름 */
+  color: var(--muted);
+  font-weight: 400;
+  text-align: left;
+}
+.route-table td{
+  font-size: 15px;
 }
 .route-note{
   color: var(--muted);
-  padding: 6px 0 3px;  /* 위쪽 6px: 결과와 출처 안내를 떼어 놓음 */
+  padding: 4px 0 0;  /* 결과와 출처 안내를 살짝 떼어 놓음 */
+  font-size: 12px;
 }
 /* 어느 시각 기준으로 계산한 경로인지 */
 .route-when{
-  font-size: 11px;
-  color: #555;
-  background: #f0f0f0;
-  padding: 2px 5px;
-  margin-bottom: 4px;
-  display: inline-block;
-}
-/* 경로별 위험 지표 */
-.route-sub{
-  color: var(--ink-soft);
-  font-size: 14px;
-  padding: 0 0 6px 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 /* 두 경로 비교 (위험 -M% · 거리 +N%): 가장 중요한 결과 */
-.route-diff{
-  font-size: 15px;
-  font-weight: 700;
-  padding: 10px 0 6px;
+.route-diff{  /* 맨 아래 결론: 위험이 얼마나 줄고 시간은 얼마나 느는가 (한 줄) */
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 4px;
   border-top: 1px solid var(--line);
+  font-size: 15px;
+  white-space: nowrap;
+}
+.route-diff > span:first-child{
+  color: var(--muted);
+}
+.route-diff b{
+  color: var(--route-blue);
 }
 
 /* 항구 이름표: 마커와 같은 남색 테두리·글자, 알약 모양 (map.js 의 className: 'port-label') */

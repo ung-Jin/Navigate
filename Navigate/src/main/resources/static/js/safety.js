@@ -134,7 +134,7 @@ function renderSafetyPanel() {
   set('sf-top-n', spot ? `${spot.near ?? ''} · ${spot.level}` : '-');
   const extra = best ? (now ? `선박 ${fmtN(best.amount)}척 · ` : `혼잡 지수 합 ${best.amount.toFixed(1)}% · `) : '';
   document.getElementById('sf-top-s').innerHTML = spot
-    ? extra + `파고 ${spot.wave ?? '-'}m · 풍속 ${spot.wind ?? '-'}m/s · ${windText(spot.windDir)}`
+    ? extra + `파고 ${spot.wave ?? '-'}m · 풍속 ${spot.wind ?? '-'}m/s`
     : '';
   set('sf-msg', d.error ?? '');
 }

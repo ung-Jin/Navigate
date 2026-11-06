@@ -16,7 +16,7 @@ map.createPane('routePane').style.zIndex = 440;
 
 // 선 색깔
 const ROUTE_COLOR_SHORTEST = '#6b7280';  // 회색 — 최소경로
-const ROUTE_COLOR_SAFE = '#2563eb';      // 파랑 — 안전경로
+const ROUTE_COLOR_SAFE = '#1d4ed8';      // 파랑 — 안전경로 (사이드의 --route-blue 와 같은 색)
 
 
 // 몇 번째 요청인지 세는 번호.
@@ -122,21 +122,29 @@ function showRouteResult(data, when) {
   const box = document.getElementById('route-result');
   if (!box) return;
 
-  // 어느 시각 기준으로 계산한 경로인지
+  // 어느 시각 기준으로 계산한 경로인지 + 두 경로를 표 한 장으로 나란히 비교
+  const a = data.shortest, b = data.safe;
   let html = '<div class="route-when">기준 ' + whenLabel(when) + '</div>' +
-    routeBlock('최소경로', ROUTE_COLOR_SHORTEST, data.shortest) +
-    routeBlock('안전경로', ROUTE_COLOR_SAFE, data.safe);
+    '<table class="route-table">' +
+      '<thead><tr><th></th>' + routeHead('shortest', '최소경로', ROUTE_COLOR_SHORTEST) + routeHead('safe', '안전경로', ROUTE_COLOR_SAFE) + '</tr></thead>' +
+      '<tbody>' +
+        routeRow('거리', a.km + 'km', b.km + 'km') +
+        routeRow('시간', a.hours + '시간', b.hours + '시간') +
+        // 위험 노출 = (위험도 × 지나간 거리) 의 합. 위험한 곳을 오래 지날수록 커진다.
+        routeRow('위험 노출', a.exposure, b.exposure) +
+        routeRow('고위험 구간', a.highKm + 'km', b.highKm + 'km') +
+      '</tbody>' +
+    '</table>';
 
   if (data.same) {
     // 피할 위험이 없으면 돌아갈 이유도 없다 — 알고리즘이 제대로 동작한 결과다
     html += '<div class="route-note">두 경로가 같습니다 — 우회할 위험 구간이 없습니다</div>';
   } else {
-    const km = data.kmPct, ex = data.exposurePct;
-    // 이 제품의 핵심은 위험이 얼마나 줄었는가: 위험을 앞에 둔다
-    html += '<div class="route-diff">' +
-      '위험 ' + (ex > 0 ? '+' : '') + ex + '% · ' +
-      '거리 ' + (km > 0 ? '+' : '') + km + '%' +
-    '</div>';
+    // 이 제품의 핵심은 판단 재료: 안전경로를 타면 위험은 얼마 줄고 시간은 얼마 느는가 (최소경로 대비)
+    const ex = data.exposurePct;
+    const dm = Math.round((Number(b.hours) - Number(a.hours)) * 60);  // 시간 차이를 분으로
+    html += '<div class="route-diff"><span>최소경로 대비</span>' +
+      '<span><b>위험 ' + (ex > 0 ? '+' : '') + ex + '%</b> · 시간 ' + (dm >= 0 ? '+' : '') + dm + '분</span></div>';
   }
 
   // 어떤 자료로 위험도를 매겼는지
@@ -149,22 +157,14 @@ function showRouteResult(data, when) {
 }
 
 
-// 경로 한 개의 숫자 묶음
-function routeBlock(title, color, path) {
-  let html =
-    '<div class="route-row">' +
-      '<span class="route-label" style="color:' + color + '">' + title + '</span>' +
-      '<span>' + path.km + 'km · ' + path.hours + '시간</span>' +
-    '</div>';
+// 표 머리 칸: 지도 위 선 모양(견본)과 같은 색의 경로 이름
+function routeHead(kind, title, color) {
+  return '<th><span class="route-label ' + kind + '" style="color:' + color + '">' + title + '</span></th>';
+}
 
-  // 위험 노출 = (위험도 × 지나간 거리) 의 합. 위험한 곳을 오래 지날수록 커진다.
-  html += '<div class="route-sub">위험 노출 ' + path.exposure;
-  if (path.highKm > 0) {
-    html += ' · 고위험 ' + path.highKm + 'km';
-  }
-  html += '</div>';
-
-  return html;
+// 표 한 줄: 항목 이름 + 최소경로 값 + 안전경로 값
+function routeRow(name, shortest, safe) {
+  return '<tr><th>' + name + '</th><td>' + shortest + '</td><td>' + safe + '</td></tr>';
 }
 
 

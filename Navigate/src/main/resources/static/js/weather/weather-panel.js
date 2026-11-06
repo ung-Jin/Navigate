@@ -67,8 +67,10 @@
         </div>
         <div class="wx-summary"></div>
         <div class="wx-cards"></div>
-        <button type="button" class="wx-fc-open" data-wx-open-drawer>72시간 그래프 보기</button>
-        <button type="button" class="cctv-open-btn">항만 영상</button>
+        <div class="wx-actions">
+          <button type="button" data-wx-open-drawer aria-expanded="false">72시간 그래프</button>
+          <button type="button" class="cctv-open-btn">항만 영상</button>
+        </div>
         <div class="wx-foot">
           <div><i class="wx-key danger"></i>위험 · 파고 3m↑ · 풍속 14m/s↑ · 시정 1km↓</div>
           <div><i class="wx-key caution"></i>주의 · 파고 2m↑ · 풍속 10m/s↑ · 시정 3km↓</div>
@@ -79,7 +81,7 @@
     panel.querySelector('.wx-tab').addEventListener('click', () => setOpen(panel.classList.contains('wx-closed')));
     panel.querySelector('.wx-close').addEventListener('click', () => setOpen(false));
     panel.addEventListener('click', (e) => {
-      if (e.target.closest('[data-wx-open-drawer]')) setDrawer(true);
+      if (e.target.closest('[data-wx-open-drawer]')) setDrawer(!drawerOpen);  // 다시 누르면 내려감
     });
     ensureDrawer();
 
@@ -142,33 +144,48 @@
   }
 
   const hh = (t) => `${Number(t.slice(5, 7))}/${Number(t.slice(8, 10))} ${t.slice(11, 13)}시`;
+  // 시작~끝: 같은 날이면 날짜 한 번만 ("11/8 06시~09시"), 날이 넘어가면 둘 다, 한 시간뿐이면 하나만
+  const span = (a, b) => (a === b ? hh(a) : a.slice(0, 10) === b.slice(0, 10) ? `${hh(a)}~${b.slice(11, 13)}시` : `${hh(a)}~${hh(b)}`);
 
-  /** "72시간 내 최대 파고 2.8m (10/22 03시) · 주의 이상 9시간, 10/21 15시부터" */
+  /** "72시간 내 위험 ··· 11/8 00시~03시" + 아래 작은 줄에 이유 "풍속 15.2m/s" (그 시간들 중 가장 센 값으로 이유를 붙임) */
   function forecastSummary(hours) {
-    const waves = hours.filter((h) => has(h.waveHeightM));
-    const peak = waves.length ? waves.reduce((a, b) => (b.waveHeightM > a.waveHeightM ? b : a)) : null;
-    const bad = hours.filter((h) => RANK[h.level] >= RANK['주의']);
     const danger = hours.filter((h) => h.level === '위험');
-    const parts = [];
-    if (peak) parts.push(`최대 파고 ${fmt(peak.waveHeightM, 'm')} (${hh(peak.time)})`);
-    if (danger.length) parts.push(`<b class="wx-fc-bad" style="--lv:${COLORS['위험']}">위험 ${danger.length}시간 · ${hh(danger[0].time)}부터</b>`);
-    else if (bad.length) parts.push(`<b class="wx-fc-bad" style="--lv:${COLORS['주의']}">주의 ${bad.length}시간 · ${hh(bad[0].time)}부터</b>`);
-    else parts.push('72시간 동안 주의 기준 이하');
-    return parts.join('<br>');
+    const bad = danger.length ? danger : hours.filter((h) => h.level === '주의');
+    if (!bad.length) return '72시간 내 주의 기준 이하';
+    const lv = danger.length ? '위험' : '주의';
+    // 이유: 그 시간들의 최대 파고·최대 풍속·최저 시정
+    let wave = null, wind = null, vis = null;
+    for (const h of bad) {
+      if (has(h.waveHeightM) && (wave === null || h.waveHeightM > wave)) wave = h.waveHeightM;
+      if (has(h.windSpeedMs) && (wind === null || h.windSpeedMs > wind)) wind = h.windSpeedMs;
+      if (has(h.visibilityKm) && (vis === null || h.visibilityKm < vis)) vis = h.visibilityKm;
+    }
+    const why = reasons({ waveHeightM: wave, windSpeedMs: wind, visibilityKm: vis });
+    return `<div class="wx-fc-row" style="--lv:${COLORS[lv]}"><b class="wx-fc-bad">72시간 내 ${lv}</b><span>${span(bad[0].time, bad[bad.length - 1].time)}</span></div>`
+      + (why.length ? `<div class="wx-fc-why">${why.join(' · ')}</div>` : '');
   }
 
   function forecastBlock(name) {
     const f = forecastOf(name);
     const st = forecasts.get(norm(name));
     let body;
-    if (!f) body = `<div class="wx-fc-none">${st && st.error ? '예보를 불러오지 못했습니다' : '예보 불러오는 중…'}</div>`;
-    else if (!(f.hours || []).length) body = '<div class="wx-fc-none">예보 없음</div>';
+    if (!f) body = `<div class="wx-fc-none">${st && st.error ? '72시간 예보를 불러오지 못했습니다' : '72시간 예보 불러오는 중…'}</div>`;
+    else if (!(f.hours || []).length) body = '<div class="wx-fc-none">72시간 예보 없음</div>';
     else body = `<div class="wx-fc-sum">${forecastSummary(f.hours)}</div>`;
     return `
       <div class="wx-fc">
-        <div class="wx-fc-title">향후 72시간 ${f && f.stale ? '<span class="wx-fc-stale">갱신 실패 · 이전 예보</span>' : ''}</div>
-        ${body}
+        ${body}${f && f.stale ? '<div class="wx-fc-stale">예보 갱신 실패 · 이전 예보</div>' : ''}
       </div>`;
+  }
+
+  /** 보조 값: 핵심 3칸(파고·풍속·시정) 아래 같은 칸에 관련 값을 작게 (파고 아래 파주기·수온, 풍속 아래 돌풍·풍향, 시정 아래 기온·강수) */
+  function subLine(w) {
+    if (![w.wavePeriodS, w.windGustMs, w.tempC, w.seaTempC, w.windDirDeg, w.precipMm].some(has)) return '';
+    const cell = (label, value) => `<div><span>${label}</span> ${value}</div>`;
+    return `<div class="wx-sub">
+          ${cell('파주기', fmt(w.wavePeriodS, 's'))}${cell('돌풍', fmt(w.windGustMs, 'm/s'))}${cell('기온', fmt(w.tempC, '℃'))}
+          ${cell('수온', fmt(w.seaTempC, '℃'))}${cell('풍향', dirName(w.windDirDeg) || '-')}${cell('강수', fmt(w.precipMm, 'mm'))}
+        </div>`;
   }
 
   function card(role, name) {
@@ -190,44 +207,37 @@
         </div>
         ${why.length ? `<div class="wx-why">${why.join(' · ')}</div>` : ''}
         ${w.stale ? `<div class="wx-stale">최신 갱신 실패 · 이전 값</div>` : ''}
-        <dl class="wx-grid">
-          <dt>풍속</dt><dd>${fmt(w.windSpeedMs, ' m/s')} <small>${dirName(w.windDirDeg)}</small></dd>
-          <dt>돌풍</dt><dd>${fmt(w.windGustMs, ' m/s')}</dd>
-          <dt>파고</dt><dd>${fmt(w.waveHeightM, ' m')}</dd>
-          <dt>파주기</dt><dd>${fmt(w.wavePeriodS, ' s')}</dd>
-          <dt>시정</dt><dd>${fmt(w.visibilityKm, ' km')}</dd>
-          <dt>기온</dt><dd>${fmt(w.tempC, '℃')}</dd>
-          <dt>수온</dt><dd>${fmt(w.seaTempC, '℃')}</dd>
-          <dt>강수</dt><dd>${fmt(w.precipMm, ' mm')}</dd>
+        <dl class="wx-main">
+          <div><dt>파고</dt><dd>${fmt(w.waveHeightM, 'm')}</dd></div>
+          <div><dt>풍속</dt><dd>${fmt(w.windSpeedMs, 'm/s')}</dd></div>
+          <div><dt>시정</dt><dd>${fmt(w.visibilityKm, 'km')}</dd></div>
         </dl>
+        ${subLine(w)}
         ${forecastBlock(w.portName)}
       </div>`;
   }
 
+  // 요약 띠: 항구마다 한 줄 (지금 상태 + 72시간 안에 나빠지면 덧붙임)
   function summary(start, end) {
-    const list = [['출발지', start], ['도착지', end]]
+    const list = [['출발', start], ['도착', end]]
       .filter(([, n]) => n)
       .map(([role, n]) => ({ role, w: byName.get(norm(n)) }))
       .filter((x) => x.w);
     if (!list.length) return { text: '', lv: null };
-    const worst = list.reduce((a, b) => (RANK[b.w.level] > RANK[a.w.level] ? b : a));
-    const lv = worst.w.level || '미상';
-    // 지금은 괜찮아도 72시간 안에 나빠지는 경우 알려줌
-    const ahead = list
-      .map((x) => ({ role: x.role, f: forecastOf(x.w.portName) }))
-      .filter((x) => x.f && x.f.hours)
-      .map((x) => ({ role: x.role, worst: x.f.hours.reduce((a, h) => Math.max(a, RANK[h.level] ?? 0), 0) }))
-      .filter((x) => x.worst >= RANK['주의']);
-    const aheadText = ahead.length
-      ? ` · 72시간 내 ${ahead.map((x) => `${x.role} ${x.worst === RANK['위험'] ? '위험' : '주의'}`).join(', ')} 예보`
-      : '';
-    if (lv === '안전') {
-      const base = list.length === 2 ? '출발지·도착지 모두 운항 양호' : `${list[0].role} 운항 양호`;
-      return { text: base + aheadText, lv: ahead.length ? (ahead.some((x) => x.worst === RANK['위험']) ? '위험' : '주의') : lv };
-    }
-    if (lv === '미상') return { text: '일부 기상 정보 없음', lv };
-    const why = reasons(worst.w);
-    return { text: `${worst.role} ${lv}${why.length ? ' · ' + why.join(', ') : ''}${aheadText}`, lv };
+    let worst = 0;  // 띠·탭 점 색 = 두 항구의 지금·예보 중 가장 나쁜 등급
+    const lines = list.map((x) => {
+      const lv = x.w.level || '미상';
+      const why = reasons(x.w);
+      let line = lv === '안전' ? `${x.role} 운항 양호`
+        : lv === '미상' ? `${x.role} 정보 없음`
+        : `${x.role} ${lv}${why.length ? ' · ' + why.join(', ') : ''}`;
+      const f = forecastOf(x.w.portName);
+      const ahead = f && f.hours ? f.hours.reduce((a, h) => Math.max(a, RANK[h.level] ?? 0), 0) : 0;
+      if (ahead >= RANK['주의']) line += ` · 72시간 내 ${ahead === RANK['위험'] ? '위험' : '주의'}`;
+      worst = Math.max(worst, RANK[lv], ahead);
+      return line;
+    });
+    return { text: lines.join('\n'), lv: Object.keys(RANK).find((k) => RANK[k] === worst) };
   }
 
   function render() {
@@ -276,7 +286,6 @@
       <div class="wx-drawer-body">
         <div class="wx-drawer-head">
           <div class="wx-drawer-legend"></div>
-          <button type="button" class="wx-close" title="닫기" aria-label="72시간 그래프 닫기"></button>
         </div>
         <div class="wx-drawer-charts">
           <div class="wx-chart" data-kind="wave"></div>
@@ -286,7 +295,6 @@
       </div>`;
     document.body.appendChild(d);
     d.querySelector('.wx-drawer-handle').addEventListener('click', () => setDrawer(!drawerOpen));
-    d.querySelector('.wx-drawer-body .wx-close').addEventListener('click', () => setDrawer(false));
     d.querySelector('.wx-drawer-charts').addEventListener('mousemove', onChartHover);
     d.querySelector('.wx-drawer-charts').addEventListener('mouseleave', hideTip);
     return d;
@@ -297,6 +305,7 @@
     const d = ensureDrawer();
     d.classList.toggle('wx-drawer-open', open);
     d.querySelector('.wx-drawer-handle').setAttribute('aria-expanded', open);
+    document.querySelector('[data-wx-open-drawer]')?.setAttribute('aria-expanded', open);  // 패널 버튼도 켜진 모양으로
     place();
     if (open) renderDrawer();
   }
@@ -347,7 +356,7 @@
   /** 꺾은선 그래프 (출발/도착 두 줄 겹쳐 그림, 주의·위험 구간은 배경색) */
   function lineChart(el, kind, data) {
     const W = Math.max(el.clientWidth, 200);
-    const H = Math.max((el.clientHeight || 190) - 18, 120);   // 제목 높이 제외
+    const H = Math.max((el.clientHeight || 190) - 24, 120);   // 제목 높이(+간격) 제외
     const pad = { l: 38, r: 10, t: 18, b: 30 };
     const key = kind === 'wave' ? 'waveHeightM' : 'windSpeedMs';
     const unit = kind === 'wave' ? 'm' : 'm/s';
