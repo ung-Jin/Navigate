@@ -21,12 +21,12 @@ const cctvStreams = {
 const cctvModal = document.getElementById('cctv-modal');
 const cctvBody = document.getElementById('cctv-body');
 
-// 영상 칸 하나: "출발지: 부산항" + 영상 (없으면 안내 문구)
+// 영상 칸 하나: "출발 부산항" + 영상 (없으면 안내 문구)
 function cctvMakeItem(role, name) {
   const stream = cctvStreams[name];
   const item = document.createElement('div');
   item.className = 'cctv-item';
-  item.innerHTML = `<div class="cctv-title">${role}: ${name}</div>`;
+  item.innerHTML = `<div class="cctv-title"><span class="cctv-role">${role}</span>${name}</div>`;
 
   if (!stream) {
     item.innerHTML += `<div class="cctv-none">${name}은(는) 국립해양조사원이 제공하는 영상이 없습니다</div>`;
@@ -43,8 +43,8 @@ function cctvOpen() {
   const start = sessionStorage.getItem('startPort');
   const end = sessionStorage.getItem('endPort');
 
-  if (start) cctvBody.appendChild(cctvMakeItem('출발지', start));
-  if (end) cctvBody.appendChild(cctvMakeItem('도착지', end));
+  if (start) cctvBody.appendChild(cctvMakeItem('출발', start));
+  if (end) cctvBody.appendChild(cctvMakeItem('도착', end));
   cctvModal.classList.add('cctv-show');
 }
 

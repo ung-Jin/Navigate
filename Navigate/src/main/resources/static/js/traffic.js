@@ -240,9 +240,7 @@ function drawLegend() {
       + steps.map((s, i) => `<span class="chip"><i style="background:${s.color}"></i>${i === 0 ? '<1' : s.min + (i === steps.length - 1 ? '+' : '')}</span>`).join('')
       + '<span class="unit">%</span></span>';
   } else {
-    box.innerHTML = now
-      ? '<span class="unit">숫자 = 해역별 선박 수 · 진한 칸 = 상위 3곳</span>'
-      : '<span class="unit">숫자 = 해역별 혼잡 칸 수 · 진한 칸 = 상위 3곳</span>';
+    box.innerHTML = '';  // 축소 화면(해역 이름표)에는 범례 없음
   }
 }
 

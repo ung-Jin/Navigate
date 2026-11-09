@@ -2,17 +2,24 @@
 .panels{
   display: grid;
   grid-template-columns: 1fr 1fr;
-  column-gap: 8px;
-  padding: 16px var(--side-pad) 8px;  /* 위: 소제목 선과 토글 버튼 사이, 아래: 사이드 맨 아래 여유 */
+  padding: 20px var(--side-pad) 12px;  /* 위: 소제목 선과 토글 버튼 사이, 아래: 사이드 맨 아래 여유 */
   font-size: 14px;
 }
 .panel{
   display: contents;  /* 패널 상자는 없애고, 안의 제목(.panel-head)·내용(.panel-body)이 격자 칸이 되게 함 */
 }
-#traffic-panel .panel-head{ grid-column: 1; grid-row: 1; }
-#safety-panel .panel-head{ grid-column: 2; grid-row: 1; }
-#traffic-panel .panel-body{ grid-column: 1 / -1; grid-row: 2; margin-top: 10px; }
-#safety-panel .panel-body{ grid-column: 1 / -1; grid-row: 3; margin-top: 14px; }  /* 두 레이어 사이는 넓게 */
+/* 위 두 줄(1줄 = 토글 둘, 2줄 = 사고 이력 칩)은 .set-box 테두리 하나 안에 들어감 → 토글은 테두리·모서리를 상자에 맡기고 안쪽에서만 칠함 */
+.set-box{
+  grid-column: 1 / -1;
+  grid-row: 1 / 3;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-ui);
+  pointer-events: none;
+}
+#traffic-panel .panel-head{ grid-column: 1; grid-row: 1; margin: 1px 0 0 1px; }
+#safety-panel .panel-head{ grid-column: 2; grid-row: 1; margin: 1px 1px 0 0; }
+#traffic-panel .panel-body{ grid-column: 1 / -1; grid-row: 3; margin-top: 18px; }
+#safety-panel .panel-body{ grid-column: 1 / -1; grid-row: 4; margin-top: 18px; }  /* 두 레이어 사이는 넓게 */
 .panel-head{
   display: flex;  /* 아래 여백은 두지 않음: 켜진 쪽만 여백이 생기면 반대쪽 버튼이 같이 커짐 (여백은 위의 .panel-body 가 가짐) */
 }
@@ -23,9 +30,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 12px;
-  border: 1px solid var(--line-control);
-  border-radius: var(--radius-ui);
+  height: 44px;             /* 이 사이드의 주인공: 사고 이력 칩(28px)보다 한 단계 크게 */
+  padding: 0 12px;
+  border: none;
   background: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -39,14 +46,15 @@
   width: 0;
   height: 0;
 }
-.panel-toggle:has(input:checked){  /* 켜진 상태 */
-  border-color: var(--route-blue);
-  background: var(--route-blue);
-  color: #fff;
+#traffic-panel .panel-toggle{ border-radius: 3px 0 0 0; }  /* 상자(4px) 안쪽 모서리 */
+#safety-panel .panel-toggle{ border-radius: 0 3px 0 0; border-left: 1px solid var(--line-control); }  /* 두 토글 사이 세로선 */
+.panel-toggle:has(input:checked){  /* 켜진 상태: 연한 파랑 바탕 + 파랑 글자 (사고 이력 칩·볼 시각도 같은 모양) */
+  background: var(--blue-tint);
+  color: var(--route-blue);
 }
 .panel-toggle:has(input:focus-visible){  /* 키보드로 이동했을 때 */
   outline: 2px solid var(--route-blue);
-  outline-offset: 2px;
+  outline-offset: -2px;
 }
 .panel.collapsed .panel-body{
   display: none;
@@ -60,7 +68,7 @@
 .when-bar{
   display: flex;
   gap: 8px;
-  padding: 16px var(--side-pad);  /* 사이드 맨 위 박스를 키움: 위아래 16px, 좌우는 사이드 공통 여백 */
+  padding: 20px var(--side-pad);  /* 사이드 맨 위 박스: 위아래 20px, 좌우는 사이드 공통 여백 */
   border-bottom: 1px solid var(--line);  /* 사이드 맨 위에 있으므로 아래쪽 선 (위쪽은 헤더 선이 있음) */
   font-size: 14px;
 }
@@ -110,8 +118,9 @@
   padding: 3px 0;
 }
 .seg input:checked + span{
-  background: var(--route-blue);
-  color: #fff;
+  background: var(--blue-tint);
+  color: var(--route-blue);
+  font-weight: 700;
 }
 
 /* 숫자 요약: 작은 카드 여러 개 대신 "라벨 ··· 값" 한 줄 목록 (큰 숫자 카드는 어느 대시보드에나 있는 모양) */
@@ -125,7 +134,7 @@
   align-items: baseline;
   justify-content: space-between;  /* 라벨은 왼쪽, 값은 오른쪽 */
   gap: 0 8px;
-  padding: 5px 0;
+  padding: 7px 0;
   border: none;
   border-bottom: 1px solid var(--line);
   background: none;
