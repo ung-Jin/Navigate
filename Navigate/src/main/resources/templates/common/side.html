@@ -22,6 +22,8 @@
     <!-- 교통현황 (common/traffic.html) · 안전진단 (common/safety.html) — 제목 버튼으로 켜고 끔 -->
     <h4 class="side-title">해양 정보</h4>
     <div class="panels">
+      <!-- 토글 두 개 + 사고 이력 칩 두 개를 한 테두리로 묶는 상자 (모양만 그림, traffic.css) -->
+      <div class="set-box"></div>
       <div th:replace="~{common/traffic::trafficFragment}"></div>
       <div th:replace="~{common/safety::safetyFragment}"></div>
     </div>

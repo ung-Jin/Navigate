@@ -78,7 +78,7 @@ function drawHotspots() {
         return;
       }
       hoverTip(L.marker([g.lat, g.lng], { icon: hsGridIcon(g.count), pane: 'hotspotBadge', keyboard: false, zIndexOffset: g.count || 0 }),
-        () => `<b>${g.near ?? ''}</b><br>사고다발 격자 (약 2.8km 칸)`
+        () => `<b>${g.near ?? ''}</b><br>사고 다발 격자 (약 2.8km 칸)`
           + `<br>사고 <b>${g.count ?? '-'}척</b> · 연평균 ${g.avg ?? '-'}척`,
         { sticky: false, at: [g.lat, g.lng], direction: 'top', offset: [0, -14] })
         .addTo(hsGridLayer);
@@ -90,7 +90,7 @@ function drawHotspots() {
     const all = map.getZoom() >= HS_ALL_STRAND_ZOOM;
     (d.stranding || []).filter(p => all || (p.size || 0) >= HS_STRAND_MIN).forEach(p => {
       hoverTip(L.marker([p.lat, p.lng], { icon: hsDiamond, pane: 'hotspotBadge', keyboard: false }),
-        () => `<b>${p.near ?? ''}</b><br>좌초 다발지점`
+        () => `<b>${p.near ?? ''}</b><br>좌초 다발 지점`
           + `<br>최근 5년 좌초·좌주 <b>${p.size ?? '-'}건</b>이 모인 곳`,
         { sticky: false, at: [p.lat, p.lng], direction: 'top', offset: [0, -8] })
         .addTo(hsStrandLayer);
@@ -101,8 +101,6 @@ function drawHotspots() {
 function renderHotspotPanel() {
   const d = hotspotData || {};
   const ok = d.year && !d.error;
-  document.getElementById('hs-grid-n').textContent = ok ? `${(d.grids || []).length}칸` : '';
-  document.getElementById('hs-strand-n').textContent = ok ? `${(d.stranding || []).length}곳` : '';
   document.getElementById('hs-msg').textContent = d.error ?? '';
 }
 
@@ -142,7 +140,7 @@ const hsPortTip = L.tooltip({ pane: 'infoTip', direction: 'top', offset: [0, -10
 function hsPortTipHtml(name) {
   const gs = (hsPortGroups.get(name) || []).slice().sort((a, b) => (b.count || 0) - (a.count || 0));
   const sum = gs.reduce((a, g) => a + (g.count || 0), 0);
-  return `<b>${name} 근처 사고다발 격자 ${gs.length}칸</b> · 사고 <b>${sum}척</b>`
+  return `<b>${name} 근처 사고 다발 격자 ${gs.length}칸</b> · 사고 <b>${sum}척</b>`
     + gs.map(g => `<br>▲${g.count ?? '-'}척 · 연평균 ${g.avg ?? '-'}척 — ${g.near ?? ''}`).join('')
     + '<br><span class="muted">확대하면 칸마다 실제 위치에 표시</span>';
 }

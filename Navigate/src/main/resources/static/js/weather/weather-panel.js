@@ -217,27 +217,29 @@
       </div>`;
   }
 
-  // 요약 띠: 항구마다 한 줄 (지금 상태 + 72시간 안에 나빠지면 덧붙임)
+  // 요약 띠: 항구마다 한 줄 — 왼쪽 = 지금 상태, 오른쪽 끝 = 72시간 안에 나빠질 때만 예보
   function summary(start, end) {
-    const list = [['출발', start], ['도착', end]]
-      .filter(([, n]) => n)
-      .map(([role, n]) => ({ role, w: byName.get(norm(n)) }))
-      .filter((x) => x.w);
-    if (!list.length) return { text: '', lv: null };
     let worst = 0;  // 띠·탭 점 색 = 두 항구의 지금·예보 중 가장 나쁜 등급
-    const lines = list.map((x) => {
-      const lv = x.w.level || '미상';
-      const why = reasons(x.w);
-      let line = lv === '안전' ? `${x.role} 운항 양호`
-        : lv === '미상' ? `${x.role} 정보 없음`
-        : `${x.role} ${lv}${why.length ? ' · ' + why.join(', ') : ''}`;
-      const f = forecastOf(x.w.portName);
-      const ahead = f && f.hours ? f.hours.reduce((a, h) => Math.max(a, RANK[h.level] ?? 0), 0) : 0;
-      if (ahead >= RANK['주의']) line += ` · 72시간 내 ${ahead === RANK['위험'] ? '위험' : '주의'}`;
+    let html = '';
+    for (const [role, name] of [['출발', start], ['도착', end]]) {
+      const w = name ? byName.get(norm(name)) : null;
+      if (!w) continue;
+      const lv = w.level || '미상';
+      const why = reasons(w);
+      let now = '운항 양호';
+      if (lv === '미상') now = '정보 없음';
+      else if (lv !== '안전') now = lv + (why.length ? ' · ' + why.join(', ') : '');
+      const f = forecastOf(w.portName);
+      let ahead = 0;
+      if (f && f.hours) {
+        for (const h of f.hours) ahead = Math.max(ahead, RANK[h.level] ?? 0);
+      }
+      const soon = ahead >= RANK['주의'] ? `72시간 내 ${ahead === RANK['위험'] ? '위험' : '주의'}` : '';
       worst = Math.max(worst, RANK[lv], ahead);
-      return line;
-    });
-    return { text: lines.join('\n'), lv: Object.keys(RANK).find((k) => RANK[k] === worst) };
+      html += `<div class="wx-sum-row"><span>${role} ${now}</span><span>${soon}</span></div>`;
+    }
+    if (!html) return { html: '', lv: null };
+    return { html, lv: Object.keys(RANK).find((k) => RANK[k] === worst) };
   }
 
   function render() {
@@ -250,8 +252,8 @@
     panel.querySelector('.wx-cards').innerHTML = card('start', start) + card('end', end);
     const s = summary(start, end);
     const sumEl = panel.querySelector('.wx-summary');
-    sumEl.textContent = s.text;
-    sumEl.style.display = s.text ? '' : 'none';
+    sumEl.innerHTML = s.html;
+    sumEl.style.display = s.html ? '' : 'none';
     sumEl.style.setProperty('--lv', s.lv ? COLORS[s.lv] : '#888');
     // 기상 패널은 항상 "지금" 기준 (위쪽 볼 시각을 바꿔도 안 바뀜) -> 그렇다고 글자로 알려 줌
     panel.querySelector('.wx-time').textContent =
@@ -310,9 +312,6 @@
     if (open) renderDrawer();
   }
 
-  // 볼 시각이 바뀌면 열려 있는 그래프의 세로선도 옮김
-  document.addEventListener('when-changed', () => { if (drawerOpen) renderDrawer(); });
-
   /**
    * 위치:
    * - 왼쪽: 사이드바 오른쪽 끝 (기상 패널이 열리고 닫혀도 안 움직임)
@@ -347,7 +346,7 @@
   }
 
   function niceMax(v) {
-    const steps = [1, 2, 2.5, 5, 10];
+    const steps = [1, 1.8, 2, 2.5, 3.5, 5, 10];   // 3.5: 파고 위험 기준(3m) 바로 위, 1.8: 풍속 위험 기준(14m/s) 바로 위(18)까지만 잡아 선이 납작해지지 않게
     const p = Math.pow(10, Math.floor(Math.log10(v)));
     for (const s of steps) if (s * p >= v) return s * p;
     return 10 * p;
@@ -356,8 +355,8 @@
   /** 꺾은선 그래프 (출발/도착 두 줄 겹쳐 그림, 주의·위험 구간은 배경색) */
   function lineChart(el, kind, data) {
     const W = Math.max(el.clientWidth, 200);
-    const H = Math.max((el.clientHeight || 190) - 24, 120);   // 제목 높이(+간격) 제외
-    const pad = { l: 38, r: 10, t: 18, b: 30 };
+    const H = Math.max((el.clientHeight || 190) - 32, 120);   // 제목 줄(32px) 제외
+    const pad = { l: 38, r: 10, t: 14, b: 30 };
     const key = kind === 'wave' ? 'waveHeightM' : 'windSpeedMs';
     const unit = kind === 'wave' ? 'm' : 'm/s';
     const caution = kind === 'wave' ? CAUTION.wave : CAUTION.wind;
@@ -369,23 +368,29 @@
     }
     const hours = base.hours;
     const n = hours.length;
-    const vals = data.flatMap((d) => d.hours.map((h) => h[key])).filter(has);
-    const maxV = niceMax(Math.max(danger * 1.25, ...(vals.length ? vals : [0])));
+    // 세로축은 데이터에 맞추되, 주의·위험 기준선은 늘 보이게 (위험 기준 × 1.1 까지)
+    let top = 0;
+    for (const d of data) {
+      for (const h of d.hours) {
+        if (has(h[key]) && h[key] > top) top = h[key];
+      }
+    }
+    const maxV = niceMax(Math.max(top * 1.3, danger * 1.1));
     const x = (i) => pad.l + ((W - pad.l - pad.r) * i) / Math.max(n - 1, 1);
     const y = (v) => pad.t + (H - pad.t - pad.b) * (1 - v / maxV);
 
     let g = '';
-    // 배경 구간
-    g += `<rect x="${pad.l}" y="${y(maxV)}" width="${W - pad.l - pad.r}" height="${y(danger) - y(maxV)}" fill="${COLORS['위험']}" opacity=".08"/>`;
-    g += `<rect x="${pad.l}" y="${y(danger)}" width="${W - pad.l - pad.r}" height="${y(caution) - y(danger)}" fill="${COLORS['주의']}" opacity=".09"/>`;
-    // y축 눈금
-    const ticks = [0, caution, danger, maxV].filter((v, i, a) => a.indexOf(v) === i);
-    ticks.forEach((v) => {
-      g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" class="wx-grid-line${v === caution || v === danger ? ' wx-grid-th' : ''}"/>`;
+    // y축 눈금: 0 과 맨 위만
+    for (const v of [0, maxV]) {
+      g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" class="wx-grid-line"/>`;
       g += `<text x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end" class="wx-axis">${v}</text>`;
-    });
-    g += `<text x="${W - pad.r}" y="${y(danger) - 4}" text-anchor="end" class="wx-th-label wx-th-danger">위험 ${danger}${unit}</text>`;
-    g += `<text x="${W - pad.r}" y="${y(caution) - 4}" text-anchor="end" class="wx-th-label wx-th-caution">주의 ${caution}${unit}</text>`;
+    }
+    // 주의·위험 기준: 얇은 점선 (색 띠 없음)
+    const marks = [[caution, '주의', COLORS['주의'], 'wx-th-caution'], [danger, '위험', COLORS['위험'], 'wx-th-danger']];
+    for (const [v, name, color, cls] of marks) {
+      g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" class="wx-grid-th" style="stroke:${color}"/>`;
+      g += `<text x="${W - pad.r}" y="${y(v) - 4}" text-anchor="end" class="wx-th-label ${cls}">${name} ${v}${unit}</text>`;
+    }
     // x축: 6시간마다 시각, 자정마다 날짜
     hours.forEach((h, i) => {
       const hour = Number(h.time.slice(11, 13));
@@ -408,16 +413,9 @@
       });
       if (path) g += `<path d="${path}" fill="none" stroke="${d.color}" stroke-width="2.2" stroke-dasharray="${d.dash}" stroke-linejoin="round"/>`;
     });
-    // 위쪽 "볼 시각"(지금/내일 …)이 이 그래프의 어디인지 세로선으로 표시
-    const w = currentWhen();
-    const wi = hours.findIndex((h) => h.time.slice(0, 13) === `${w.date.slice(0, 4)}-${w.date.slice(4, 6)}-${w.date.slice(6)}T${w.hour}`);
-    if (wi >= 0) {
-      g += `<line x1="${x(wi)}" x2="${x(wi)}" y1="${pad.t}" y2="${H - pad.b}" class="wx-when-line"/>`;
-      g += `<text x="${x(wi)}" y="${pad.t - 5}" text-anchor="middle" class="wx-when-label">${whenLabel(w)}</text>`;
-    }
     g += `<line class="wx-cursor" x1="0" x2="0" y1="${pad.t}" y2="${H - pad.b}" style="display:none"/>`;
 
-    el.innerHTML = `<div class="wx-chart-title">${kind === 'wave' ? '파고 (m)' : '풍속 (m/s)'}</div>
+    el.innerHTML = `<div class="wx-chart-title">${kind === 'wave' ? '파고' : '풍속'} <span class="wx-unit">(${unit})</span></div>
       <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${kind === 'wave' ? '파고' : '풍속'} 72시간 예보 그래프">${g}</svg>`;
     el.dataset.n = n;
     el.dataset.l = pad.l;
@@ -432,7 +430,7 @@
     const lv = Object.keys(RANK).find((k) => RANK[k] === worst);
     d.querySelector('.wx-drawer-handle .wx-tab-dot').style.background = lv ? COLORS[lv] : 'transparent';
     d.querySelector('.wx-drawer-legend').innerHTML = drawerData.length
-      ? drawerData.map((s) => `<span class="wx-legend-item"><svg width="26" height="8"><line x1="0" x2="26" y1="4" y2="4" stroke="${s.color}" stroke-width="2.2" stroke-dasharray="${s.dash}"/></svg>${s.label} ${esc(s.name)}</span>`).join('')
+      ? drawerData.map((s) => `<span class="wx-legend-item"><svg width="34" height="8"><line x1="0" x2="34" y1="4" y2="4" stroke="${s.color}" stroke-width="3" stroke-dasharray="${s.dash}"/></svg>${s.label} ${esc(s.name)}</span>`).join('')
       : '<span class="wx-fc-none">지도에서 출발지/도착지를 선택하세요</span>';
     if (!drawerOpen) return;
     d.querySelectorAll('.wx-chart').forEach((el) => {
